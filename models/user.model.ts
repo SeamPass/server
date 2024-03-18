@@ -1,0 +1,106 @@
+require("dotenv").config();
+import mongoose, { Model, Schema } from "mongoose";
+import { generateSalt, hashPassword } from "../utils/passwordHash";
+
+const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const passwordRegexPattern = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+
+export interface Iuser extends Document {
+  _id: string;
+  nickname: string;
+  email: string;
+  password: string;
+  isVerified: boolean;
+  role: string;
+  salt: string;
+  verificationToken: string | undefined;
+  tokenExpiration: Date | undefined;
+  resetPasswordToken: string | undefined;
+  resetPasswordExpire: Date | undefined;
+  comparePassword: (password: string) => Promise<boolean>;
+  signAccessToken: () => string;
+  signRefreshToken: () => string;
+  encryptedEncryptionKey: string;
+  sgek: string;
+  ps: string;
+  esalt: string;
+}
+
+const userSchema: Schema<Iuser> = new mongoose.Schema(
+  {
+    nickname: {
+      type: String,
+      required: [true, "Please enter your nickname"],
+      minLength: [5, "Nickname/Username must be at least 5 letters long"],
+    },
+    email: {
+      type: String,
+      required: [true, "Please enter your email"],
+      validate: {
+        validator: function (value: string) {
+          return emailRegexPattern.test(value);
+        },
+        message: "Please enter a valid email",
+      },
+      unique: true,
+    },
+
+    password: {
+      type: String,
+      required: [true, "Please enter your password"],
+
+      select: false,
+    },
+    salt: {
+      type: String,
+    },
+    encryptedEncryptionKey: {
+      type: String,
+    },
+    sgek: {
+      type: String,
+    },
+    ps: {
+      type: String,
+    },
+    esalt: {
+      type: String,
+    },
+    role: {
+      type: String,
+      enum: ["user", "admin"], // Enum to restrict the role to certain values
+      default: "user",
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+    },
+    tokenExpiration: {
+      type: Date,
+    },
+    resetPasswordToken: {
+      type: String,
+      required: false,
+    },
+    resetPasswordExpire: {
+      type: Date,
+      required: false,
+    },
+  },
+  { timestamps: true }
+);
+
+//compare password
+userSchema.methods.comparePassword = async function (
+  enteredPassword: string
+): Promise<boolean> {
+  const hashedEnteredPassword = await hashPassword(enteredPassword, this.salt);
+  return this.password === hashedEnteredPassword;
+};
+
+const userModel: Model<Iuser> = mongoose.model("User", userSchema);
+
+export default userModel;
