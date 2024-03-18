@@ -89,50 +89,20 @@ export const getSingleWifi = CatchAsyncError(
   }
 );
 
-export const editWifi = CatchAsyncError(
+export const editWifiDetails = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { wifiId } = req.params;
-    const updates: Record<string, any> = req.body;
+    const { passwordId } = req.params;
+    console.log(passwordId);
+    const updates = req.body;
     const userId = req.user?._id;
 
-    if (!userId) {
-      return next(new ErrorHandler("Authentication required", 401));
-    }
-
-    // Retrieve the user to get their unique salt and encryption key
-    const user = await userModel.findById(userId).select("+password +esalt");
-    if (!user) {
-      return next(new ErrorHandler("User not found", 404));
-    }
-
-    const userSalt = user.esalt;
-    const userPassword = user.password;
-    const userEncryptionKey = decrypt(
-      user.encryptedEncryptionKey,
-      userPassword,
-      userSalt
-    );
-
-    const encryptedUpdates: Record<string, any> = Object.keys(updates).reduce(
-      (acc: any, key: any) => {
-        if (["wifiName", "wifiPassword"].includes(key)) {
-          acc[key] = encrypt(updates[key], userEncryptionKey, userSalt);
-        } else {
-          acc[key] = updates[key];
-        }
-        return acc;
-      },
-      {}
-    );
-
-    // Perform the update
-    const updatedPassword = await WifiModel.findOneAndUpdate(
-      { _id: wifiId, user: userId },
-      { $set: encryptedUpdates },
+    const updatedWifi = await WifiModel.findOneAndUpdate(
+      { _id: passwordId, user: userId },
+      { $set: updates },
       { new: true, runValidators: true }
     );
 
-    if (!updatedPassword) {
+    if (!updatedWifi) {
       return next(
         new ErrorHandler("Wifi not found or not owned by the user", 404)
       );
@@ -140,8 +110,8 @@ export const editWifi = CatchAsyncError(
 
     res.status(200).json({
       success: true,
-      message: "Wifi updated successfully",
-      data: updatedPassword,
+      message: "Wifi details updated successfully",
+      data: updatedWifi,
     });
   }
 );
