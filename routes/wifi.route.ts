@@ -5,7 +5,7 @@ import {
   addWifi,
   deleteMultipleWifi,
   deleteSingleWifi,
-  editWifi,
+  editWifiDetails,
   getSingleWifi,
   getWifi,
 } from "../controllers/wifi.controller";
@@ -31,6 +31,6 @@ wifiRouter.get("/get-wifi", isAuthenticated, getWifi);
 wifiRouter.get("/get-wifi/:id", isAuthenticated, getSingleWifi);
 wifiRouter.delete("/delete-wifi/:wifiId", isAuthenticated, deleteSingleWifi);
 wifiRouter.post("/delete-wifi", isAuthenticated, deleteMultipleWifi);
-wifiRouter.put("/update-wifi/:wifiId", isAuthenticated, editWifi);
+wifiRouter.put("/update-wifi/:wifiId", isAuthenticated, editWifiDetails);
 
 export default wifiRouter;

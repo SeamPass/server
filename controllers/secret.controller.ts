@@ -69,6 +69,7 @@ export const getSingleNote = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
+      console.log(id);
       const userId = req?.user?._id;
       const note = await SecretModel.findOne({ _id: id, user: userId });
 
@@ -88,12 +89,12 @@ export const getSingleNote = CatchAsyncError(
 
 export const editSecretNote = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { noteId } = req.params;
+    const { id } = req.params;
     const updates = req.body;
     const userId = req.user?._id;
 
     const updatedNote = await SecretModel.findOneAndUpdate(
-      { _id: noteId, user: userId },
+      { _id: id, user: userId },
       { $set: updates },
       { new: true, runValidators: true }
     );

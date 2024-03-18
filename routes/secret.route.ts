@@ -28,13 +28,13 @@ const loginRateLimiter = createRateLimiter({
 
 secretRouter.post("/add-secret", isAuthenticated, addSecretNote);
 secretRouter.get("/get-secret", isAuthenticated, getSecretNote);
-secretRouter.get("/get-secret/:noteId", isAuthenticated, getSingleNote);
+secretRouter.get("/get-secret/:id", isAuthenticated, getSingleNote);
 secretRouter.delete(
   "/delete-secret/:secretId",
   isAuthenticated,
   deleteSingleSecretNote
 );
 secretRouter.post("/delete-secret", isAuthenticated, deleteMultipleSecretNote);
-secretRouter.put("/update-secret/:secretId", isAuthenticated, editSecretNote);
+secretRouter.put("/update-secret/:id", isAuthenticated, editSecretNote);
 
 export default secretRouter;
