@@ -361,6 +361,8 @@ export const login = CatchAsyncError(
       return res.status(200).json({
         success: true,
         message: "Please verify the code sent to your email.",
+        tempCode,
+        is2StepEnabled: emailVerification.isForLoginEnabled,
       });
     } else {
       // If two-step verification is not enabled, proceed with normal login
@@ -666,23 +668,82 @@ export const changePassword = CatchAsyncError(
   }
 );
 
-// Function to get user-specific salt
-export const getSalt = CatchAsyncError(
+export const getUser = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    // The user's ID should be determined from the authentication process (e.g., from the JWT token)
-    const userId = req?.user?._id; // Assuming req.user is set from authentication middleware
+    const userId = req?.user?._id;
+    console.log(userId);
+    try {
+      // Find the user based on the userId and retrieve the salt
+      const user = await userModel.findById({ _id: userId });
 
-    // Find the user based on the userId and retrieve the salt
-    const user = await userModel.findById({ _id: userId }).select("salt");
-    console.log(user);
-    if (!user) {
-      return next(new ErrorHandler("User not found", 404));
+      if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+      }
+
+      const isEmailVerified = await EmailVerificationModel.findOne({
+        userId,
+      });
+
+      const userInfo = {
+        ...user.toJSON(),
+        password: undefined,
+        salt: undefined,
+        ps: undefined,
+        sgek: undefined,
+        verificationToken: undefined,
+        is2StepEnabled: isEmailVerified?.isForLoginEnabled,
+      };
+
+      return res.status(200).json({
+        success: true,
+        user: userInfo,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
     }
+  }
+);
 
-    // Return the salt to the client
-    return res.status(200).json({
-      success: true,
-      salt: user.salt,
-    });
+export const updateUser = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req?.user?._id;
+
+    const { nickname, email } = req.body;
+
+    try {
+      const updatedUser = await userModel
+        .findByIdAndUpdate(
+          userId,
+          { nickname, email },
+          { new: true, runValidators: true }
+        )
+        .select(
+          "-password -salt -ps -sgek -verificationToken -tokenExpiration -resetPasswordToken -resetPasswordExpire"
+        );
+
+      if (!updatedUser) {
+        return next(new ErrorHandler("User not found", 404));
+      }
+
+      const userInfo = {
+        ...updatedUser.toJSON(),
+        password: undefined,
+        salt: undefined,
+        ps: undefined,
+        sgek: undefined,
+        verificationToken: undefined,
+        tokenExpiration: undefined,
+        resetPasswordToken: undefined,
+        resetPasswordExpire: undefined,
+      };
+
+      return res.status(200).json({
+        success: true,
+        message: "User profile updated",
+        user: userInfo,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
+    }
   }
 );

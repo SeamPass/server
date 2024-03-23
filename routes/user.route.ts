@@ -2,13 +2,14 @@ import express from "express";
 import {
   changePassword,
   forgotPassword,
-  getSalt,
+  getUser,
   login,
   logoutUser,
   registerUser,
   resendResetLink,
   resendVerificationLink,
   updateAccessToken,
+  updateUser,
   verifyUser,
 } from "../controllers/user.controller";
 import { isAuthenticated } from "../middleware/auth";
@@ -43,7 +44,8 @@ userRouter.post("/login", login);
 userRouter.get("/logout", isAuthenticated, logoutUser);
 userRouter.get("/refresh-access-token", updateAccessToken);
 userRouter.post("/forgot-password/confirm", forgotPassword);
-userRouter.get("/get-salt", isAuthenticated, getSalt);
+userRouter.get("/get-user", isAuthenticated, getUser);
+userRouter.patch("/update-user", isAuthenticated, updateUser);
 userRouter.post(
   "/forgot-password/resend",
   resendResetLinkLimiter,
@@ -55,7 +57,8 @@ userRouter.post(
   isAuthenticated,
   enableEmailVerificationForLogin
 );
-userRouter.get(
+
+userRouter.post(
   "/disable2Step",
   isAuthenticated,
   disableEmailVerificationForLogin
