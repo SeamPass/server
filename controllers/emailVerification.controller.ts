@@ -5,6 +5,8 @@ import { generateRandomCode } from "../utils/generateRandomCode";
 import { sendToken } from "../utils/jwt";
 import userModel from "../models/user.model";
 import ErrorHandler from "../utils/ErrorHandler";
+import EncryptionKeyModel from "../models/encryptionKeyModel";
+import sendMail from "../utils/sendMail";
 
 export const enableEmailVerificationForLogin = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -22,12 +24,33 @@ export const enableEmailVerificationForLogin = CatchAsyncError(
       { upsert: true, new: true }
     );
 
+    const user = await userModel.findById({ _id: userId });
+
     // Send the verification code to the user's email
-    // ...
+    const data = {
+      code: emailVerificationCode,
+      name: user?.nickname,
+    };
+
+    try {
+      await sendMail({
+        email: user?.email,
+        data,
+        template: "enable2Step-code.ejs",
+        subject: "Code",
+      });
+    } catch (err) {
+      console.error("Failed to send email:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send Welcome email",
+      });
+    }
 
     res.status(200).json({
       success: true,
       message: "Verification code sent. Please check your email.",
+      emailVerificationCode,
     });
   }
 );
@@ -73,7 +96,7 @@ export const disableEmailVerificationForLogin = CatchAsyncError(
 
     await EmailVerificationModel.findOneAndUpdate(
       { userId },
-      { isEnabled: false },
+      { isForLoginEnabled: false },
       { new: true }
     );
 
@@ -120,7 +143,18 @@ export const verifyEmailVerificationCode = CatchAsyncError(
         .select(
           "-password -twoFactorSecret -resetPasswordExpire -resetPasswordToken -verificationToken -tokenExpiration"
         );
-      sendToken(userInfo, 200, res);
+
+      const info = await EncryptionKeyModel.findOne({
+        userId: user._id,
+      }).lean();
+
+      const AllInfo = {
+        userInfo,
+        sgek: info?.encryptedSGEK,
+        iv: info?.iv,
+      };
+
+      sendToken(AllInfo, 200, res);
     } else {
       res.status(401).json({
         success: false,

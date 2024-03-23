@@ -23,10 +23,26 @@ export const addPassword = CatchAsyncError(
     const passwordStrength = "Normal";
     const compromised = false;
 
+    // Check if the password already exists in the vault
+    const existingPassword = await PasswordModel.findOne({
+      user: userId,
+      websiteName,
+      url: websiteUrl,
+    });
+
+    if (existingPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Password already exists in the vault.",
+      });
+    }
+
+    console.log(websiteUrl);
+
     await PasswordModel.create({
       user: userId,
       websiteName,
-      websiteUrl,
+      url: websiteUrl,
       username: { encUsername: username, iv: usernameIv },
       password: { encPassword: password, iv: passwordIv },
       passwordStrength,
@@ -69,8 +85,8 @@ export const getPassword = CatchAsyncError(
       url: passwordEntry.url,
       username: passwordEntry.username,
       password: passwordEntry.password,
-      compromised: passwordEntry.compromised,
-      passwordStrength: passwordEntry.passwordStrength,
+      // compromised: passwordEntry.compromised,
+      // passwordStrength: passwordEntry.passwordStrength,
       websiteNameIv: passwordEntry.websiteNameIv,
       urlIv: passwordEntry.urlIv,
       usernameIv: passwordEntry.usernameIv,

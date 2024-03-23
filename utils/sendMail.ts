@@ -4,7 +4,7 @@ import ejs from "ejs";
 import path from "path";
 
 interface EmailOptions {
-  email: string;
+  email: string | undefined;
   subject: string;
   template: string;
   data: { [key: string]: any };
