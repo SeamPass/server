@@ -11,25 +11,26 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [16.x, 18.x, 20.x]
+        node-version: [16.x, 18.x, 20.x] 
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'yarn'
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
 
-    - name: Install Yarn dependencies
-      run: yarn install
+      - name: Install Yarn dependencies
+        run: yarn install
 
-    - name: Run lint
-      run: yarn lint --if-present
+      - name: Run lint
+        run: yarn lint
 
-    - name: Build
-      run: yarn build --if-present
+      - name: Build
+        run: yarn build
 
-    - name: Run tests
-      run: yarn test
+      - name: Run tests
+        run: yarn test
+       
