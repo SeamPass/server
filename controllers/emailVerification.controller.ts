@@ -150,8 +150,9 @@ export const verifyEmailVerificationCode = CatchAsyncError(
 
       const AllInfo = {
         userInfo,
-        sgek: info?.encryptedSGEK,
+        mk: info?.mk,
         iv: info?.iv,
+        salt: info?.salt,
       };
 
       sendToken(AllInfo, 200, res);

@@ -2,12 +2,14 @@ import express from "express";
 import {
   changePassword,
   forgotPassword,
+  getSalt,
   getUser,
   login,
   logoutUser,
   registerUser,
   resendResetLink,
   resendVerificationLink,
+  unlockUser,
   updateAccessToken,
   updateUser,
   verifyUser,
@@ -41,17 +43,19 @@ userRouter.post("/register-user", registerUser);
 userRouter.post("/verify", verifyUser);
 userRouter.post("/resend-verification-link", resendVerificationLink);
 userRouter.post("/login", login);
+userRouter.get("/get-salt", getSalt);
 userRouter.get("/logout", isAuthenticated, logoutUser);
 userRouter.get("/refresh-access-token", updateAccessToken);
 userRouter.post("/forgot-password/confirm", forgotPassword);
 userRouter.get("/get-user", isAuthenticated, getUser);
 userRouter.patch("/update-user", isAuthenticated, updateUser);
+userRouter.post("/unlock-account", isAuthenticated, unlockUser);
 userRouter.post(
   "/forgot-password/resend",
   resendResetLinkLimiter,
   resendResetLink
 );
-userRouter.post("/change-password", changePassword);
+userRouter.post("/change-password", isAuthenticated, changePassword);
 userRouter.post(
   "/enable2Step",
   isAuthenticated,

@@ -2,8 +2,10 @@ import mongoose from "mongoose";
 
 interface IEncryptionKeyDocument extends Document {
   userId: mongoose.Types.ObjectId;
-  encryptedSGEK: string;
+  mk: string;
   iv: string;
+  salt: string;
+  clientSalt: string;
 }
 
 const encryptionKeySchema = new mongoose.Schema(
@@ -14,11 +16,15 @@ const encryptionKeySchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    encryptedSGEK: {
+    mk: {
       type: String,
       required: true,
     },
     iv: {
+      type: String,
+      required: true,
+    },
+    salt: {
       type: String,
       required: true,
     },

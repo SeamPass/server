@@ -4,6 +4,7 @@ import { isAuthenticated } from "../middleware/auth";
 import {
   retrieveEncryptedSGEK,
   storeEncryptedSGEK,
+  updateEncryptedSGEK,
 } from "../controllers/encryptionKey.controller";
 
 const encryptionKeyRouter = express.Router();
@@ -23,10 +24,7 @@ const loginRateLimiter = createRateLimiter({
 });
 
 encryptionKeyRouter.post("/store-sgek", storeEncryptedSGEK);
-encryptionKeyRouter.get(
-  "/retrieve-sgek",
-  isAuthenticated,
-  retrieveEncryptedSGEK
-);
+encryptionKeyRouter.get("/retrieve-keys", retrieveEncryptedSGEK);
+encryptionKeyRouter.patch("/update-keys", isAuthenticated, updateEncryptedSGEK);
 
 export default encryptionKeyRouter;

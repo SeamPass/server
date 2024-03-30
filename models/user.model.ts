@@ -12,7 +12,7 @@ export interface Iuser extends Document {
   password: string;
   isVerified: boolean;
   role: string;
-  salt: string;
+  clientSalt: string;
   verificationToken: string | undefined;
   tokenExpiration: Date | undefined;
   resetPasswordToken: string | undefined;
@@ -22,8 +22,6 @@ export interface Iuser extends Document {
   signRefreshToken: () => string;
   encryptedEncryptionKey: string;
   sgek: string;
-  ps: string;
-  esalt: string;
 }
 
 const userSchema: Schema<Iuser> = new mongoose.Schema(
@@ -48,10 +46,9 @@ const userSchema: Schema<Iuser> = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Please enter your password"],
-
       select: false,
     },
-    salt: {
+    clientSalt: {
       type: String,
     },
     encryptedEncryptionKey: {
@@ -60,15 +57,9 @@ const userSchema: Schema<Iuser> = new mongoose.Schema(
     sgek: {
       type: String,
     },
-    ps: {
-      type: String,
-    },
-    esalt: {
-      type: String,
-    },
     role: {
       type: String,
-      enum: ["user", "admin"], // Enum to restrict the role to certain values
+      enum: ["user", "admin"],
       default: "user",
     },
     isVerified: {

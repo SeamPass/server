@@ -14,10 +14,11 @@ import {
   generateRefreshToken,
   sendToken,
 } from "../utils/jwt";
-import { decrypt, encrypt } from "../utils/encryption";
+import { decrypt, deriveKey, encrypt } from "../utils/encryption";
 import { generateSalt, hashPassword } from "../utils/passwordHash";
 import { minutesToFutureTimestamp } from "../utils/minutesToFutureTimestamp";
 import EncryptionKeyModel from "../models/encryptionKeyModel";
+import PasswordModel from "../models/password.model";
 
 interface IRegisterUser {
   nickname: string;
@@ -30,10 +31,10 @@ interface IRegisterUser {
 export const registerUser = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { nickname, email, password } = req.body;
-
+      const { nickname, email, hashedPassword, clientSalt } = req.body;
+      console.log({ nickname, email, hashedPassword, clientSalt });
       // Validation checks
-      if (!nickname || !email || !password) {
+      if (!nickname || !email || !hashedPassword || !clientSalt) {
         return next(
           new ErrorHandler("Please provide nickname, email, and password.", 400)
         );
@@ -44,22 +45,7 @@ export const registerUser = CatchAsyncError(
         return next(new ErrorHandler("Email already exists.", 400));
       }
 
-      const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
-      if (!passwordRegex.test(password)) {
-        return next(
-          new ErrorHandler(
-            "Password must include numbers, lowercase and uppercase letters, and be at least 8 characters long.",
-            400
-          )
-        );
-      }
-
-      // Generate salt and hash the password
-      const salt = generateSalt();
-      const hashedPassword = await hashPassword(password, salt);
-
       // Generate a unique encryption key for each user
-      const encryptionKey = crypto.randomBytes(32).toString("hex");
       const encryptionSalt = crypto.randomBytes(32).toString("hex");
       const verificationToken = crypto.randomBytes(32).toString("hex");
 
@@ -68,9 +54,8 @@ export const registerUser = CatchAsyncError(
         nickname,
         email,
         password: hashedPassword,
-        salt,
+        clientSalt,
         verificationToken,
-        sgek: encryptionKey,
         ps: encryptionSalt,
       });
 
@@ -103,8 +88,7 @@ export const registerUser = CatchAsyncError(
           id: newUser._id,
           nickname: newUser.nickname,
           email: newUser.email,
-          encryptionSalt: newUser.ps,
-          sgek: newUser.sgek,
+          encryptionSalt,
         },
       });
     } catch (error: any) {
@@ -332,9 +316,8 @@ export const login = CatchAsyncError(
       return next(new ErrorHandler("User not found", 404));
     }
 
-    // Check if the password is correct
-    const isPasswordMatch = await user.comparePassword(password);
-    if (!isPasswordMatch) {
+    // Compare the client-side hashed password with the stored hashed password
+    if (user.password !== password) {
       return next(new ErrorHandler("Invalid password", 401));
     }
 
@@ -375,10 +358,12 @@ export const login = CatchAsyncError(
       const info = await EncryptionKeyModel.findOne({
         userId: user._id,
       }).lean();
+      console.log(info);
       const AllInfo = {
         userInfo,
-        sgek: info?.encryptedSGEK,
+        mk: info?.mk,
         iv: info?.iv,
+        salt: info?.salt,
       };
 
       sendToken(AllInfo, 200, res);
@@ -601,70 +586,65 @@ export const resendResetLink = CatchAsyncError(
   }
 );
 
-export const changePassword = CatchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { token, password, repeatPassword } = req.body;
+export const changePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req?.user?._id;
+    const { oldPassword, newPassword, confirmNewPassword, newSalt } = req.body;
 
-      if (!token || !password || !repeatPassword) {
-        return next(
-          new ErrorHandler("Please provide all required details", 400)
-        );
-      }
-
-      if (password !== repeatPassword) {
-        return next(new ErrorHandler("Passwords do not match", 400));
-      }
-
-      // Hash the token to compare with the one stored in the database
-      const hashedToken = crypto
-        .createHash("sha256")
-        .update(token)
-        .digest("hex");
-
-      const user = await userModel
-        .findOne({
-          resetPasswordToken: hashedToken,
-          resetPasswordExpire: { $gt: new Date() },
-        })
-        .select("+password");
-
-      if (!user) {
-        return next(
-          new ErrorHandler("Invalid or expired password reset token", 400)
-        );
-      }
-
-      const oldEncryptionKey = decrypt(
-        user.encryptedEncryptionKey,
-        user.password,
-        user.esalt
-      );
-
-      // Hash the new password
-      const hashedNewPassword = await hashPassword(password, user.salt);
-
-      const reEncryptedEncryptionKey = encrypt(
-        oldEncryptionKey,
-        hashedNewPassword,
-        user.esalt
-      );
-      // Update the user's password
-      user.password = hashedNewPassword;
-      user.encryptedEncryptionKey = reEncryptedEncryptionKey;
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpire = undefined;
-      await user.save({ validateBeforeSave: false });
-
-      // send confirmation email here
-
-      res.status(200).json({
-        success: true,
-        message: "Password has been reset successfully.",
-      });
-    } catch (error: any) {
-      return next(new ErrorHandler(error.message, 500));
+    if (!oldPassword || !newPassword || !confirmNewPassword || !newSalt) {
+      return next(new ErrorHandler("Please provide all required fields", 400));
     }
+
+    if (newPassword !== confirmNewPassword) {
+      return next(new ErrorHandler("Passwords do not match", 400));
+    }
+
+    // Fetch the user document from the database
+    const user = await userModel.findById(userId).select("+password +salt");
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+    // Compare the client-side hashed password with the stored hashed password
+    if (user.password !== oldPassword) {
+      return next(new ErrorHandler("Invalid password", 401));
+    }
+
+    // Update the user's password with the new hashed password and new client-side generated salt
+    user.password = newPassword;
+    user.clientSalt = newSalt; // Assuming you store the salt used for hashing the password
+    await user.save();
+
+    const info = await EncryptionKeyModel.findOne({
+      userId: user._id,
+    }).lean();
+
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfully.",
+      ...info,
+    });
+  } catch (error: any) {
+    next(new ErrorHandler(error.message, 500));
+  }
+};
+
+export const getSalt = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { email } = req.query;
+    const user = await userModel.findOne({ email });
+    console.log(user);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    res.json({ success: true, salt: user.clientSalt });
   }
 );
 
@@ -745,5 +725,34 @@ export const updateUser = CatchAsyncError(
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
     }
+  }
+);
+
+export const unlockUser = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { email, password } = req.body;
+    console.log(email, password);
+
+    // Find the user based on the email
+    const user = await userModel.findOne({ email }).select("+password");
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+    // Compare the client-side hashed password with the stored hashed password
+    if (user.password !== password) {
+      return next(new ErrorHandler("Invalid password", 401));
+    }
+
+    const info = await EncryptionKeyModel.findOne({
+      userId: user._id,
+    }).lean();
+
+    // Inform the user that a verification code has been sent
+    return res.status(200).json({
+      success: true,
+      ...info,
+      message: "Account Unlocked",
+    });
   }
 );
