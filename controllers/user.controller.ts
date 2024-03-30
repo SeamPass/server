@@ -636,8 +636,8 @@ export const changePassword = async (
 export const getSalt = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email } = req.query;
-    const user = await userModel.findOne({ email });
-    console.log(user);
+    const user = await userModel.findOne({ email: email as string });
+
     if (!user) {
       return res
         .status(404)
