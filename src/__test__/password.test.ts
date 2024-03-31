@@ -1,14 +1,14 @@
-import mongoose from "mongoose";
-import { Request, Response, NextFunction } from "express";
-import { getSinglePassword } from "../controllers/password.controller";
-import PasswordModel from "../models/password.model";
-
 jest.mock("../models/password.model", () => ({
   __esModule: true,
   default: {
     findOne: jest.fn(),
   },
 }));
+
+import mongoose from "mongoose";
+import { Request, Response, NextFunction } from "express";
+import { getSinglePassword } from "../controllers/password.controller";
+import PasswordModel from "../models/password.model";
 
 // Types for mocked req, res, and next
 type MockRequest = Partial<Request> & {
