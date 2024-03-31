@@ -4,14 +4,13 @@ import { getSinglePassword } from "../controllers/password.controller";
 import { Request, Response, NextFunction } from "express";
 
 // Jest mock for mongoose model
-jest.mock("../models/password.model", () => ({
-  findOne: jest.fn(),
-}));
+jest.mock("../models/password.model");
 
 describe("get passwords", () => {
   it("should get password by id", async () => {
     // Mock the implementation of findOne to return a resolved promise
     (PasswordModel.findOne as jest.Mock).mockResolvedValue({
+      _id: new mongoose.Types.ObjectId(),
       user: new mongoose.Types.ObjectId(),
       websiteName: "Test Website",
       url: "http://test.com",
