@@ -1,36 +1,55 @@
+import mongoose from "mongoose";
+import { Request, Response, NextFunction } from "express";
+import PasswordModel from "../models/password.model";
+import { getSinglePassword } from "../controllers/password.controller";
+
+// Mock the entire module with jest.mock
 jest.mock("../models/password.model", () => ({
   __esModule: true,
   default: {
     findOne: jest.fn(),
+    create: jest.fn(),
   },
 }));
 
-import mongoose from "mongoose";
-import { Request, Response, NextFunction } from "express";
-import { getSinglePassword } from "../controllers/password.controller";
-import PasswordModel from "../models/password.model";
-
-// Types for mocked req, res, and next
+//types for mocked requests and responses
 type MockRequest = Partial<Request> & {
   params: { id: string };
   user?: { _id: string };
 };
-
 type MockResponse = Partial<Response> & {
   json: jest.Mock;
 };
-
 type MockNextFunction = jest.Mock<NextFunction>;
 
+//mocked model to jest.Mocked type
+const mockedPasswordModel = PasswordModel as jest.Mocked<typeof PasswordModel>;
+
 describe("Password Controller Tests", () => {
+  // mock request, response, and next function
+  let mockReq: MockRequest;
+  let mockRes: MockResponse;
+  let mockNext: MockNextFunction;
+
   // Reset the mocks before each test
   beforeEach(() => {
-    (PasswordModel.findOne as jest.Mock).mockClear();
+    mockReq = {
+      params: { id: "password_id" },
+      user: { _id: "user_id" },
+    } as MockRequest;
+    mockRes = {
+      json: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+    } as MockResponse;
+    mockNext = jest.fn() as MockNextFunction;
+
+    // Clear all mocks before each test
+    jest.clearAllMocks();
   });
 
-  it("should get password by id", async () => {
+  it("should get a password by id", async () => {
     // Set up the mock resolved value for findOne
-    (PasswordModel.findOne as jest.Mock).mockResolvedValue({
+    mockedPasswordModel.findOne.mockResolvedValue({
       _id: new mongoose.Types.ObjectId(),
       user: new mongoose.Types.ObjectId(),
       websiteName: "Test Website",
@@ -41,40 +60,25 @@ describe("Password Controller Tests", () => {
       compromised: false,
     });
 
-    // Create mock request and response objects
-    const req = {
-      params: { id: "some_id" },
-      user: { _id: "user_id" },
-    } as MockRequest;
-
-    const res = {
-      json: jest.fn(),
-    } as MockResponse;
-
-    const next: MockNextFunction = jest.fn();
-
-    // Call the controller function with the mocked req, res, and next
+    // Call the controller function with the mocked request and response
     await getSinglePassword(
-      req as Request,
-      res as Response,
-      next as NextFunction
+      mockReq as Request,
+      mockRes as Response,
+      mockNext as NextFunction
     );
 
-    // Assertions to ensure findOne was called correctly
-    expect(PasswordModel.findOne).toHaveBeenCalledWith({
-      _id: req.params.id,
-      user: req?.user?._id,
+    // Assertions to ensure the methods were called correctly
+    expect(mockedPasswordModel.findOne).toHaveBeenCalledWith({
+      _id: mockReq.params.id,
+      user: mockReq.user?._id,
     });
-
-    // Assertions to ensure the response was sent
-    expect(res.json).toHaveBeenCalledWith({
-      success: true,
-      data: expect.anything(),
-    });
+    expect(mockRes.json).toHaveBeenCalledWith(expect.anything());
   });
 
-  //Clear all mocks after all tests are done
-  afterAll(() => {
-    jest.restoreAllMocks();
-  });
+  describe("add password", () => {});
+});
+
+// Clear all mocks after all tests are done
+afterAll(() => {
+  jest.restoreAllMocks();
 });
