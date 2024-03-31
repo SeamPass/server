@@ -1,3 +1,12 @@
+// Mock the entire module with jest.mock
+jest.mock("../models/password.model", () => ({
+  __esModule: true,
+  default: {
+    findOne: jest.fn(),
+    create: jest.fn(),
+  },
+}));
+
 import mongoose from "mongoose";
 import { Request, Response, NextFunction } from "express";
 import PasswordModel from "../models/password.model";
