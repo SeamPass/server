@@ -3,12 +3,12 @@ import express, { NextFunction, Request, Response } from "express";
 export const app = express();
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { ErrorMiddleware } from "./middleware/error";
-import userRouter from "./routes/user.route";
-import passwordRouter from "./routes/password.route";
-import encryptionKeyRouter from "./routes/encryptionKey.route";
-import secretRouter from "./routes/secret.route";
-import wifiRouter from "./routes/wifi.route";
+import { ErrorMiddleware } from "./src/middleware/error";
+import userRouter from "./src/routes/user.route";
+import passwordRouter from "./src/routes/password.route";
+import encryptionKeyRouter from "./src/routes/encryptionKey.route";
+import secretRouter from "./src/routes/secret.route";
+import wifiRouter from "./src/routes/wifi.route";
 
 //body parser
 app.use(
