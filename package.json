@@ -9,7 +9,7 @@
     "test": "jest",
     "dev": "ts-node-dev --respawn --transpile-only server.ts",
     "type-check": "tsc --noEmit",
-    "build": "tsc -p tsconfig.prod.json"
+    "build": "tsc"
   },
   "dependencies": {
     "@types/bcrypt": "^5.0.2",
