@@ -47,6 +47,7 @@ export const addPassword = CatchAsyncError(
 
       await details.save();
 
+      // Set response status to 201
       res.status(201).json({
         success: true,
         message: "Password information added successfully.",
