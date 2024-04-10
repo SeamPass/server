@@ -32,7 +32,7 @@ export const registerUser = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { nickname, email, hashedPassword, clientSalt } = req.body;
-      console.log({ nickname, email, hashedPassword, clientSalt });
+
       // Validation checks
       if (!nickname || !email || !hashedPassword || !clientSalt) {
         return next(
@@ -72,7 +72,6 @@ export const registerUser = CatchAsyncError(
           subject: "Welcome",
         });
       } catch (err) {
-        console.error("Failed to send email:", err);
         return res.status(500).json({
           success: false,
           message: "Failed to send Welcome email",
@@ -224,13 +223,12 @@ export const resendVerificationLink = CatchAsyncError(
     // Send the email with the reset link
     try {
     } catch (err) {
-      console.error("Failed to send email:", err);
       return res.status(500).json({
         success: false,
         message: "Failed to send password reset email",
       });
     }
-    console.log(user.email);
+
     // Resend the email
     try {
       /////
@@ -327,8 +325,6 @@ export const login = CatchAsyncError(
     });
 
     if (emailVerification && emailVerification.isForLoginEnabled) {
-      console.log("Email verification for login is enabled");
-
       // Generate a new verification code
       const tempCode = generateRandomCode(6);
       emailVerification.emailVerificationCode = tempCode;
@@ -354,16 +350,18 @@ export const login = CatchAsyncError(
         .select(
           "-password -twoFactorSecret -resetPasswordExpire -salt -esalt -encryptedEncryptionKey -resetPasswordToken -verificationToken  -tokenExpiration"
         );
+
       // Generate a unique identifier for the session
       const info = await EncryptionKeyModel.findOne({
         userId: user._id,
       }).lean();
-      console.log(info);
+
       const AllInfo = {
         userInfo,
         mk: info?.mk,
         iv: info?.iv,
         salt: info?.salt,
+        is2StepEnabled: emailVerification?.isForLoginEnabled,
       };
 
       sendToken(AllInfo, 200, res);
@@ -506,7 +504,6 @@ export const forgotPassword = CatchAsyncError(
           subject: "Password Reset",
         });
       } catch (err) {
-        console.error("Failed to send email:", err);
         return res.status(500).json({
           success: false,
           message: "Failed to send password reset email",
@@ -651,7 +648,7 @@ export const getSalt = CatchAsyncError(
 export const getUser = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const userId = req?.user?._id;
-    console.log(userId);
+
     try {
       // Find the user based on the userId and retrieve the salt
       const user = await userModel.findById({ _id: userId });
@@ -731,7 +728,6 @@ export const updateUser = CatchAsyncError(
 export const unlockUser = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email, password } = req.body;
-    console.log(email, password);
 
     // Find the user based on the email
     const user = await userModel.findOne({ email }).select("+password");

@@ -69,7 +69,7 @@ export const getSingleNote = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      console.log(id);
+
       const userId = req?.user?._id;
       const note = await SecretModel.findOne({ _id: id, user: userId });
 
@@ -81,7 +81,6 @@ export const getSingleNote = CatchAsyncError(
 
       res.json({ success: true, data: note });
     } catch (error) {
-      console.error("Failed to get note:", error);
       next(error);
     }
   }

@@ -34,7 +34,11 @@ secretRouter.delete(
   isAuthenticated,
   deleteSingleSecretNote
 );
-secretRouter.post("/delete-secret", isAuthenticated, deleteMultipleSecretNote);
+secretRouter.delete(
+  "/delete-secrets",
+  isAuthenticated,
+  deleteMultipleSecretNote
+);
 secretRouter.put("/update-secret/:id", isAuthenticated, editSecretNote);
 
 export default secretRouter;

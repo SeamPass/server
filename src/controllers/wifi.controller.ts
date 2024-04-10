@@ -9,7 +9,6 @@ import { paginate } from "../utils/pagination";
 export const addWifi = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { wifiName, wifiPassword } = req.body;
-    console.log(wifiName);
     const userId = req.user?._id;
 
     if (!wifiName || !wifiPassword) {
@@ -83,7 +82,6 @@ export const getSingleWifi = CatchAsyncError(
 
       res.json({ success: true, data: note });
     } catch (error) {
-      console.error("Failed to get wifi details:", error);
       next(error);
     }
   }
@@ -92,7 +90,7 @@ export const getSingleWifi = CatchAsyncError(
 export const editWifiDetails = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { passwordId } = req.params;
-    console.log(passwordId);
+
     const updates = req.body;
     const userId = req.user?._id;
 

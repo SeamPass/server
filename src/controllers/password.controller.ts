@@ -10,49 +10,50 @@ import { paginate } from "../utils/pagination";
 
 export const addPassword = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const {
-      websiteName,
-      websiteUrl,
-      username,
-      password,
-      usernameIv,
-      passwordIv,
-    } = req.body;
-    const userId = req.user?._id;
+    try {
+      const {
+        websiteName,
+        websiteUrl,
+        username,
+        password,
+        usernameIv,
+        passwordIv,
+        passwordStrength,
+      } = req.body;
+      const userId = req.user?._id;
 
-    const passwordStrength = "Normal";
-    const compromised = false;
-
-    // Check if the password already exists in the vault
-    const existingPassword = await PasswordModel.findOne({
-      user: userId,
-      websiteName,
-      url: websiteUrl,
-    });
-
-    if (existingPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "Password already exists in the vault.",
+      // Check if the password already exists in the vault
+      const existingPassword = await PasswordModel.findOne({
+        user: userId,
+        websiteName,
+        url: websiteUrl,
       });
+
+      if (existingPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "Password already exists in the vault.",
+        });
+      }
+
+      const details = await PasswordModel.create({
+        user: userId,
+        websiteName,
+        url: websiteUrl,
+        username: { encUsername: username, iv: usernameIv },
+        password: { encPassword: password, iv: passwordIv },
+        passwordStrength,
+      });
+
+      await details.save();
+
+      res.status(201).json({
+        success: true,
+        message: "Password information added successfully.",
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
     }
-
-    console.log(websiteUrl);
-
-    await PasswordModel.create({
-      user: userId,
-      websiteName,
-      url: websiteUrl,
-      username: { encUsername: username, iv: usernameIv },
-      password: { encPassword: password, iv: passwordIv },
-      passwordStrength,
-      compromised,
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Password information added successfully.",
-    });
   }
 );
 
@@ -85,15 +86,14 @@ export const getPassword = CatchAsyncError(
       url: passwordEntry.url,
       username: passwordEntry.username,
       password: passwordEntry.password,
-      // compromised: passwordEntry.compromised,
-      // passwordStrength: passwordEntry.passwordStrength,
+      passwordStrength: passwordEntry.passwordStrength,
       websiteNameIv: passwordEntry.websiteNameIv,
       urlIv: passwordEntry.urlIv,
       usernameIv: passwordEntry.usernameIv,
       passwordIv: passwordEntry.passwordIv,
     }));
 
-    res.status(200).json({
+    res.status(201).json({
       success: true,
       ...pageInfo,
       data: passwordsForClient,
@@ -116,7 +116,6 @@ export const getSinglePassword = CatchAsyncError(
 
       res.json({ success: true, data: password });
     } catch (error) {
-      console.error("Failed to get password:", error);
       next(error);
     }
   }
@@ -125,7 +124,7 @@ export const getSinglePassword = CatchAsyncError(
 export const editPassword = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { passwordId } = req.params;
-    console.log(passwordId);
+
     const updates = req.body;
     const userId = req.user?._id;
 
@@ -180,7 +179,6 @@ export const deleteMultiplePasswords = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user?._id;
     const { passwordIds } = req.body;
-    console.log(passwordIds);
     if (!Array.isArray(passwordIds) || passwordIds.length === 0) {
       return next(
         new ErrorHandler("An array of password IDs is required.", 400)

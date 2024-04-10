@@ -42,8 +42,6 @@ export async function paginate<T extends Document>(
 
   const totalDocuments = await model.countDocuments(query);
 
-  // Log the search query before executing the database query
-  console.log("Search Query:", query);
   const results = await model.find(query).skip(skip).limit(limit).lean();
 
   return {

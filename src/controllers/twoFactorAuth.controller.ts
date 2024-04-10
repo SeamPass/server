@@ -17,7 +17,6 @@ export const enable2fa = CatchAsyncError(
       if (!twoFactorSetup) {
         // If no 2FA setup, create a new one
         const newSecret = generate2FASecret(userEmail as string);
-        console.log(newSecret);
 
         // Generate backup codes (example: 10 codes)
         const backupCodes = [];
@@ -47,7 +46,6 @@ export const enable2fa = CatchAsyncError(
         // If 2FA setup exists but not enabled, enable it
 
         const newSecret = generate2FASecret(userEmail as string);
-        console.log(newSecret);
 
         // Generate backup codes (example: 10 codes)
         const backupCodes = [];

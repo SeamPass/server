@@ -3,7 +3,6 @@ import mongoose, { Model, Schema } from "mongoose";
 import { generateSalt, hashPassword } from "../utils/passwordHash";
 
 const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const passwordRegexPattern = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
 
 export interface Iuser extends Document {
   _id: string;
@@ -13,6 +12,7 @@ export interface Iuser extends Document {
   isVerified: boolean;
   role: string;
   clientSalt: string;
+  is2StepEnabled: boolean;
   verificationToken: string | undefined;
   tokenExpiration: Date | undefined;
   resetPasswordToken: string | undefined;
@@ -63,6 +63,10 @@ const userSchema: Schema<Iuser> = new mongoose.Schema(
       default: "user",
     },
     isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    is2StepEnabled: {
       type: Boolean,
       default: false,
     },

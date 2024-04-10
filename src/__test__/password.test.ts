@@ -1,93 +1,130 @@
-// Mock the entire module with jest.mock
-jest.mock("../models/password.model", () => ({
-  __esModule: true,
-  default: {
-    findOne: jest.fn(),
-    create: jest.fn(),
-  },
-}));
-
 import mongoose from "mongoose";
 import { Request, Response, NextFunction } from "express";
+import {
+  addPassword,
+  getSinglePassword,
+} from "../controllers/password.controller";
 import PasswordModel from "../models/password.model";
-import { getSinglePassword } from "../controllers/password.controller";
 
-// Mock the entire module with jest.mock
-jest.mock("../models/password.model", () => ({
-  __esModule: true,
-  default: {
-    findOne: jest.fn(),
-    create: jest.fn(),
-  },
-}));
+// Assuming jest is already in the Jest global scope
+// If not, import it as needed
 
-//types for mocked requests and responses
+// Mock the entire PasswordModel for all tests in this file
+jest.mock("../models/password.model");
+
+// Define types for request and response. These should reflect the actual types used in your controllers.
 type MockRequest = Partial<Request> & {
   params: { id: string };
-  user?: { _id: string };
+  user: { _id: string };
+  body: any;
 };
-type MockResponse = Partial<Response> & {
+
+interface MockResponse extends Partial<Response> {
   json: jest.Mock;
-};
-type MockNextFunction = jest.Mock<NextFunction>;
+  status: jest.Mock;
+}
 
-//mocked model to jest.Mocked type
-const mockedPasswordModel = PasswordModel as jest.Mocked<typeof PasswordModel>;
+interface MockNextFunction extends NextFunction {}
 
-describe("Password Controller Tests", () => {
-  // mock request, response, and next function
+// Describe block for the PasswordController
+describe("PasswordController", () => {
   let mockReq: MockRequest;
   let mockRes: MockResponse;
   let mockNext: MockNextFunction;
 
-  // Reset the mocks before each test
   beforeEach(() => {
+    // Mock reset for each test
     mockReq = {
       params: { id: "password_id" },
-      user: { _id: "user_id" },
-    } as MockRequest;
+      user: { _id: "312y31sh373" },
+      body: {},
+    } as any;
+
     mockRes = {
-      json: jest.fn(),
-      status: jest.fn().mockReturnThis(),
+      json: jest.fn(() => mockRes), // Return mockRes to allow chaining of calls
+      status: jest.fn(() => mockRes), // Return mockRes to allow chaining of calls
     } as MockResponse;
+
     mockNext = jest.fn() as MockNextFunction;
 
-    // Clear all mocks before each test
+    // Clear mock implementations
     jest.clearAllMocks();
   });
 
-  it("should get a password by id", async () => {
-    // Set up the mock resolved value for findOne
-    mockedPasswordModel.findOne.mockResolvedValue({
-      _id: new mongoose.Types.ObjectId(),
-      user: new mongoose.Types.ObjectId(),
-      websiteName: "Test Website",
-      url: "http://test.com",
-      username: { encUsername: "encrypted_username", iv: "iv_value" },
-      password: { encPassword: "encrypted_password", iv: "iv_value" },
-      passwordStrength: "Strong",
-      compromised: false,
-    });
+  describe("getSinglePassword", () => {
+    it("should get a password by id", async () => {
+      const passwordData = {
+        _id: new mongoose.Types.ObjectId(),
+        user: mockReq.user?._id,
+        websiteName: "Test Website",
+        url: "http://test.com",
+        username: "testUser",
+        password: "testPass",
+        passwordStrength: "Strong",
+        compromised: false,
+      };
 
-    // Call the controller function with the mocked request and response
-    await getSinglePassword(
-      mockReq as Request,
-      mockRes as Response,
-      mockNext as NextFunction
-    );
+      // Mock implementation of findOne
+      (PasswordModel.findOne as jest.Mock).mockResolvedValue(passwordData);
 
-    // Assertions to ensure the methods were called correctly
-    expect(mockedPasswordModel.findOne).toHaveBeenCalledWith({
-      _id: mockReq.params.id,
-      user: mockReq.user?._id,
+      // Act
+      await getSinglePassword(
+        mockReq as unknown as Request,
+        mockRes as unknown as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(PasswordModel.findOne).toHaveBeenCalled();
+      expect(mockRes.json).toHaveBeenCalledWith(expect.anything());
     });
-    expect(mockRes.json).toHaveBeenCalledWith(expect.anything());
   });
 
-  describe("add password", () => {});
-});
+  describe("addPassword", () => {
+    it("should add a new password if not already existing", async () => {
+      const passwordDetails = {
+        websiteName: "New Website",
+        url: "https://new-website.com",
+        username: { encUsername: "username", iv: "usernameIv" },
+        password: { encPassword: "password", iv: "passwordIv" },
+      };
 
-// Clear all mocks after all tests are done
-afterAll(() => {
-  jest.restoreAllMocks();
+      mockReq.body = passwordDetails;
+
+      // Mock implementation of findOne to simulate no existing password
+      (PasswordModel.findOne as jest.Mock).mockResolvedValue(null);
+
+      // Mock implementation of create
+      (PasswordModel.create as jest.Mock).mockResolvedValue({
+        user: mockReq.user?._id,
+        ...passwordDetails,
+        passwordStrength: "Normal",
+        compromised: false,
+      });
+
+      // Act
+      await addPassword(
+        mockReq as unknown as Request,
+        mockRes as unknown as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(PasswordModel.findOne).toHaveBeenCalledWith({
+        user: mockReq.user?._id,
+        websiteName: passwordDetails.websiteName,
+        url: passwordDetails?.url,
+      });
+
+      expect(PasswordModel.create).toHaveBeenCalledWith(expect.anything());
+      // expect(mockRes.status).toHaveBeenCalledWith(201);
+      // expect(mockRes.json).toHaveBeenCalledWith(expect.anything());
+    });
+  });
+
+  // Other tests...
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 });

@@ -40,7 +40,6 @@ export const enableEmailVerificationForLogin = CatchAsyncError(
         subject: "Code",
       });
     } catch (err) {
-      console.error("Failed to send email:", err);
       return res.status(500).json({
         success: false,
         message: "Failed to send Welcome email",

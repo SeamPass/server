@@ -34,7 +34,7 @@ passwordRouter.delete(
   isAuthenticated,
   deleteSinglePassword
 );
-passwordRouter.post(
+passwordRouter.delete(
   "/delete-passwords",
   isAuthenticated,
   deleteMultiplePasswords

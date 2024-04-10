@@ -9,16 +9,11 @@ export function applySearch<T>(
     return baseQuery;
   }
 
-  console.log(baseQuery, searchTerm, searchFields);
-  console.log("first");
-
   const searchConditions: FilterQuery<T> = {
     $or: searchFields.map((field) => ({
       [field]: { $regex: new RegExp(searchTerm, "i") },
     })) as any,
   };
-
-  console.log(searchConditions);
 
   return { ...baseQuery, ...searchConditions };
 }

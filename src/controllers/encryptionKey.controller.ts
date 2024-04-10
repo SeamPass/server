@@ -63,12 +63,12 @@ export const updateEncryptedSGEK = CatchAsyncError(
         new ErrorHandler("Missing required fields: mk, iv, or newSalt", 400)
       );
     }
-    console.log(userId);
+
     try {
       const encryptionDetails = await EncryptionKeyModel.findOne({
         userId: userId,
       });
-      console.log(encryptionDetails);
+
       if (!encryptionDetails) {
         return next(new ErrorHandler("Encryption details not found", 404));
       }
@@ -87,7 +87,6 @@ export const updateEncryptedSGEK = CatchAsyncError(
         data: updatedEncryptionDetails,
       });
     } catch (error) {
-      console.error("Error updating encryption details:", error);
       next(new ErrorHandler("Internal server error", 500));
     }
   }

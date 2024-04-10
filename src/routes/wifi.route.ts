@@ -30,7 +30,7 @@ wifiRouter.post("/add-wifi", isAuthenticated, addWifi);
 wifiRouter.get("/get-wifi", isAuthenticated, getWifi);
 wifiRouter.get("/get-wifi/:id", isAuthenticated, getSingleWifi);
 wifiRouter.delete("/delete-wifi/:wifiId", isAuthenticated, deleteSingleWifi);
-wifiRouter.post("/delete-wifi", isAuthenticated, deleteMultipleWifi);
+wifiRouter.delete("/delete-wifis", isAuthenticated, deleteMultipleWifi);
 wifiRouter.put("/update-wifi/:wifiId", isAuthenticated, editWifiDetails);
 
 export default wifiRouter;
