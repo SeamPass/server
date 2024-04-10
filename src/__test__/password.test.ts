@@ -10,7 +10,13 @@ import PasswordModel from "../models/password.model";
 // If not, import it as needed
 
 // Mock the entire PasswordModel for all tests in this file
-jest.mock("../models/password.model");
+jest.mock("../models/password.model", () => ({
+  PasswordModel: {
+    findOne: jest.fn(),
+    create: jest.fn(),
+    // ... other methods
+  },
+}));
 
 // Define types for request and response. These should reflect the actual types used in your controllers.
 type MockRequest = Partial<Request> & {
@@ -116,7 +122,7 @@ describe("PasswordController", () => {
         url: passwordDetails?.url,
       });
 
-      // expect(PasswordModel.create).toHaveBeenCalledWith(expect.anything());
+      expect(PasswordModel.create).toHaveBeenCalledWith(expect.anything());
       // expect(mockRes.status).toHaveBeenCalledWith(201);
       // expect(mockRes.json).toHaveBeenCalledWith(expect.anything());
     });
