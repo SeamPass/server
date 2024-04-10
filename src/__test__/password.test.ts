@@ -90,7 +90,7 @@ describe("PasswordController", () => {
         password: { encPassword: "password", iv: "passwordIv" },
       };
 
-      mockReq.body = { ...passwordDetails, websiteUrl: passwordDetails.url }; // Add websiteUrl property for consistency with the controller function
+      mockReq.body = { ...passwordDetails, websiteUrl: passwordDetails.url };
 
       // Mock implementation of findOne to simulate no existing password
       (PasswordModel.findOne as jest.Mock).mockResolvedValue(null);
