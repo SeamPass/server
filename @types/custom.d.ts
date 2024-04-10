@@ -1,10 +1,6 @@
-import { Request } from "express";
-import { Iuser } from "../src/models/user.model";
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: Iuser;
-    }
+// types/express/index.d.ts
+declare namespace Express {
+  export interface Request {
+    user?: any; // Or better, the actual type you expect here
   }
 }

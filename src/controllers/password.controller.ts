@@ -20,7 +20,7 @@ export const addPassword = CatchAsyncError(
         passwordIv,
         passwordStrength,
       } = req.body;
-      const userId = req.user?._id;
+      const userId = (req.user as any)?._id;
 
       // Check if the password already exists in the vault
       const existingPassword = await PasswordModel.findOne({
@@ -60,7 +60,7 @@ export const addPassword = CatchAsyncError(
 
 export const getPassword = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const userId = req.user?._id;
+    const userId = (req.user as any)?._id;
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -127,7 +127,7 @@ export const editPassword = CatchAsyncError(
     const { passwordId } = req.params;
 
     const updates = req.body;
-    const userId = req.user?._id;
+    const userId = (req.user as any)?._id;
 
     const updatedPassword = await PasswordModel.findOneAndUpdate(
       { _id: passwordId, user: userId },
@@ -151,7 +151,7 @@ export const editPassword = CatchAsyncError(
 
 export const deleteSinglePassword = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const userId = req.user?._id;
+    const userId = req?.user?._id as string;
     const { passwordId } = req.params;
 
     if (!passwordId) {
@@ -178,7 +178,7 @@ export const deleteSinglePassword = CatchAsyncError(
 
 export const deleteMultiplePasswords = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const userId = req.user?._id;
+    const userId = (req.user as any)?._id;
     const { passwordIds } = req.body;
     if (!Array.isArray(passwordIds) || passwordIds.length === 0) {
       return next(
