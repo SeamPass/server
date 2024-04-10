@@ -1,4 +1,16 @@
-jest.mock("../models/password.model");
+jest.mock("../models/password.model", () => {
+  const mockModel = {
+    findOne: jest.fn(),
+    create: jest.fn(),
+    // Other methods as needed
+  };
+  return {
+    __esModule: true,
+    default: mockModel,
+    // Export the mocked model directly
+    PasswordModel: mockModel,
+  };
+});
 
 import mongoose from "mongoose";
 import { Request, Response, NextFunction } from "express";
@@ -7,8 +19,6 @@ import {
   getSinglePassword,
 } from "../controllers/password.controller";
 import PasswordModel from "../models/password.model";
-
-jest.mock("../models/password.model");
 
 type MockRequest = Partial<Request> & {
   params: { id: string };
