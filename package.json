@@ -5,10 +5,11 @@
   "author": "Sofiritari Amgbara",
   "license": "MIT",
   "scripts": {
+    "start": "ts-node-dev server.ts",
     "test": "jest",
     "dev": "ts-node-dev --respawn --transpile-only server.ts",
     "type-check": "tsc --noEmit",
-    "build": "tsc"
+    "build": "tsc -p tsconfig.prod.json"
   },
   "dependencies": {
     "@types/bcrypt": "^5.0.2",
