@@ -1,0 +1,7 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+      "types": [] // Override to exclude Jest types globally
+    },
+    "exclude": ["**/*.test.ts", "**/*.spec.ts", "node_modules"]
+  }
