@@ -1,3 +1,5 @@
+jest.mock("../models/password.model");
+
 import mongoose from "mongoose";
 import { Request, Response, NextFunction } from "express";
 import {
