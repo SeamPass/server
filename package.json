@@ -4,7 +4,6 @@
   "main": "server.js",
   "author": "Sofiritari Amgbara",
   "license": "MIT",
-  "type": "module",
   "scripts": {
     "test": "jest",
     "dev": "ts-node-dev --respawn --transpile-only server.ts",
