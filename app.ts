@@ -28,6 +28,7 @@ app.use(
       "http://localhost:3000",
       "https://angry-minute-production.up.railway.app",
       "https://passsafe-fe-production.up.railway.app",
+      "http://localhost:54346",
     ],
     credentials: true,
   })
