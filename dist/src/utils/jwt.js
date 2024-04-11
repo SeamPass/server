@@ -28,7 +28,7 @@ const sendToken = (user, statusCode, res
     // Options for cookies
     const cookieOptions = {
         httpOnly: true,
-        sameSite: "lax", // Using 'as const' for literal types
+        sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
     };
     // Set cookies for tokens

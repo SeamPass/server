@@ -23,7 +23,13 @@ exports.app.use(express_1.default.json({
 exports.app.use((0, cookie_parser_1.default)());
 //cors => cross origin resource sharing
 exports.app.use((0, cors_1.default)({
-    origin: ["http://localhost:5173", "http://localhost:3000"],
+    origin: [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://angry-minute-production.up.railway.app",
+        "https://passsafe-fe-production.up.railway.app",
+        "http://localhost:54346",
+    ],
     credentials: true,
 }));
 //routes
