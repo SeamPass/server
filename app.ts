@@ -11,17 +11,11 @@ import secretRouter from "./src/routes/secret.route";
 import wifiRouter from "./src/routes/wifi.route";
 
 //cors => cross origin resource sharing
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "https://passsafe-fe-production.up.railway.app",
-    ],
-    credentials: true,
-  })
-);
+app.use(cors({ origin: "*", credentials: true }));
 
+// "http://localhost:5173",
+//       "http://localhost:3000",
+//       "https://passsafe-fe-production.up.railway.app",
 //body parser
 app.use(
   express.json({
