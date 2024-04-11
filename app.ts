@@ -10,6 +10,18 @@ import encryptionKeyRouter from "./src/routes/encryptionKey.route";
 import secretRouter from "./src/routes/secret.route";
 import wifiRouter from "./src/routes/wifi.route";
 
+//cors => cross origin resource sharing
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "https://passsafe-fe-production.up.railway.app/",
+    ],
+    credentials: true,
+  })
+);
+
 //body parser
 app.use(
   express.json({
@@ -19,14 +31,6 @@ app.use(
 
 //cookie parser
 app.use(cookieParser());
-
-//cors => cross origin resource sharing
-app.use(
-  cors({
-    origin: ["https://passsafe-fe-production.up.railway.app"],
-    credentials: true,
-  })
-);
 
 //routes
 app.use(
