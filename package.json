@@ -5,6 +5,7 @@
   "author": "Sofiritari Amgbara",
   "license": "MIT",
   "scripts": {
+    "start": "node server.ts",
     "test": "jest",
     "dev": "ts-node-dev --respawn --transpile-only server.ts",
     "type-check": "tsc --noEmit",
