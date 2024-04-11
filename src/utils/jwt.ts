@@ -36,7 +36,7 @@ export const sendToken = (
   // Options for cookies
   const cookieOptions = {
     httpOnly: true,
-    sameSite: "lax" as const, // Using 'as const' for literal types
+    sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
   };
 

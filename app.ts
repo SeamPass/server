@@ -10,6 +10,16 @@ import encryptionKeyRouter from "./src/routes/encryptionKey.route";
 import secretRouter from "./src/routes/secret.route";
 import wifiRouter from "./src/routes/wifi.route";
 
+//body parser
+app.use(
+  express.json({
+    limit: "50mb",
+  })
+);
+
+//cookie parser
+app.use(cookieParser());
+
 //cors => cross origin resource sharing
 app.use(
   cors({
@@ -21,16 +31,6 @@ app.use(
     credentials: true,
   })
 );
-
-//body parser
-app.use(
-  express.json({
-    limit: "50mb",
-  })
-);
-
-//cookie parser
-app.use(cookieParser());
 
 //routes
 app.use(
