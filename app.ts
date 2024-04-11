@@ -23,11 +23,7 @@ app.use(cookieParser());
 //cors => cross origin resource sharing
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "https://passsafe-fe-production.up.railway.app",
-    ],
+    origin: ["https://passsafe-fe-production.up.railway.app"],
     credentials: true,
   })
 );
