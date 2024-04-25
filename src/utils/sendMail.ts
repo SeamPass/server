@@ -35,6 +35,8 @@ const sendMail = async (options: EmailOptions): Promise<void> => {
     website_url,
   });
 
+  console.log(html);
+
   const mailOptions = {
     from: process.env.SMTP_MAIL,
     to: email,

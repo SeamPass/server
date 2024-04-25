@@ -39,6 +39,7 @@ const sendMail = (options) => __awaiter(void 0, void 0, void 0, function* () {
         data,
         website_url,
     });
+    console.log(html);
     const mailOptions = {
         from: process.env.SMTP_MAIL,
         to: email,
