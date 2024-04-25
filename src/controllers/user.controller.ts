@@ -691,7 +691,7 @@ export const unlockUser = CatchAsyncError(
 
     // Compare the client-side hashed password with the stored hashed password
     if (user.password !== password) {
-      return next(new ErrorHandler("Invalid password", 401));
+      return next(new ErrorHandler("Invalid password", 400));
     }
 
     const info = await EncryptionKeyModel.findOne({
