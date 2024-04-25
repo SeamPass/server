@@ -18,18 +18,18 @@ const ejs_1 = __importDefault(require("ejs"));
 const path_1 = __importDefault(require("path"));
 const sendMail = (options) => __awaiter(void 0, void 0, void 0, function* () {
     const transporter = nodemailer_1.default.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || "587"),
-        secure: false,
+        service: "hotmail",
+        // port: process.env.STMP_PORT,
+        // secure: process.env.STMP_SECURE,
         auth: {
             user: process.env.SMTP_MAIL,
             pass: process.env.SMTP_PASSWORD,
         },
-        tls: {
-            ciphers: "SSLv3",
-        },
     });
-    console.log(options);
+    console.log({
+        user: process.env.SMTP_MAIL,
+        pass: process.env.SMTP_PASSWORD,
+    });
     const { email, subject, template, data } = options;
     // get the path to the email template file
     const templatePath = path_1.default.join(__dirname, "../mail", template);

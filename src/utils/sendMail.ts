@@ -12,18 +12,18 @@ interface EmailOptions {
 
 const sendMail = async (options: EmailOptions): Promise<void> => {
   const transporter: Transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || "587"),
-    secure: false,
+    service: "hotmail",
+    // port: process.env.STMP_PORT,
+    // secure: process.env.STMP_SECURE,
     auth: {
       user: process.env.SMTP_MAIL,
       pass: process.env.SMTP_PASSWORD,
     },
-    tls: {
-      ciphers: "SSLv3",
-    },
   });
-  console.log(options);
+  console.log({
+    user: process.env.SMTP_MAIL,
+    pass: process.env.SMTP_PASSWORD,
+  });
   const { email, subject, template, data } = options;
 
   // get the path to the email template file
