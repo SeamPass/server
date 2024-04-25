@@ -6,7 +6,7 @@ import { sendToken } from "../utils/jwt";
 import userModel from "../models/user.model";
 import ErrorHandler from "../utils/ErrorHandler";
 import EncryptionKeyModel from "../models/encryptionKeyModel";
-import sendMail from "../utils/sendMail";
+import sendEmail from "../utils/sendMail";
 
 export const enableEmailVerificationForLogin = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -28,7 +28,7 @@ export const enableEmailVerificationForLogin = CatchAsyncError(
 
     // Send the verification code to the user's email
     try {
-      await sendMail({
+      await sendEmail({
         email: user?.email,
         data: {
           code: emailVerificationCode,
@@ -76,7 +76,7 @@ export const verifyEmailVerificationOnEnable = CatchAsyncError(
       await emailVerification.save();
 
       try {
-        await sendMail({
+        await sendEmail({
           email: user?.email,
           data: {
             name: user?.nickname,
@@ -117,7 +117,7 @@ export const disableEmailVerificationForLogin = CatchAsyncError(
     const user = await userModel.findById({ _id: userId });
 
     try {
-      await sendMail({
+      await sendEmail({
         email: user?.email,
         template: "disable2Step.ejs",
         data: { name: user?.nickname },

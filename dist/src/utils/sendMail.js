@@ -16,7 +16,7 @@ require("dotenv").config();
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const ejs_1 = __importDefault(require("ejs"));
 const path_1 = __importDefault(require("path"));
-const sendMail = (options) => __awaiter(void 0, void 0, void 0, function* () {
+const sendEmail = (options) => __awaiter(void 0, void 0, void 0, function* () {
     const transporter = nodemailer_1.default.createTransport({
         service: "hotmail",
         // port: process.env.STMP_PORT,
@@ -49,4 +49,4 @@ const sendMail = (options) => __awaiter(void 0, void 0, void 0, function* () {
     console.log(mailOptions);
     yield transporter.sendMail(mailOptions);
 });
-exports.default = sendMail;
+exports.default = sendEmail;

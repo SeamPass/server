@@ -10,7 +10,7 @@ interface EmailOptions {
   data?: { [key: string]: any };
 }
 
-const sendMail = async (options: EmailOptions): Promise<void> => {
+const sendEmail = async (options: EmailOptions): Promise<void> => {
   const transporter: Transporter = nodemailer.createTransport({
     service: "hotmail",
     // port: process.env.STMP_PORT,
@@ -47,4 +47,4 @@ const sendMail = async (options: EmailOptions): Promise<void> => {
   await transporter.sendMail(mailOptions);
 };
 
-export default sendMail;
+export default sendEmail;

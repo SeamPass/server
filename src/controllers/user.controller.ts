@@ -4,7 +4,6 @@ import { CatchAsyncError } from "../middleware/catchAyncError";
 import ErrorHandler from "../utils/ErrorHandler";
 import userModel from "../models/user.model";
 import crypto from "crypto";
-import sendMail from "../utils/sendMail";
 import logger from "../utils/logger";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import {
@@ -23,6 +22,7 @@ import sharp from "sharp";
 import s3 from "../utils/s3";
 import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import sendEmail from "../utils/sendMail";
 
 interface IRegisterUser {
   nickname: string;
@@ -74,7 +74,7 @@ export const registerUser = CatchAsyncError(
         email: newUser.email,
       };
       try {
-        await sendMail({
+        await sendEmail({
           email: newUser.email,
           data,
           template: "verify-email.ejs",
@@ -138,7 +138,7 @@ export const resendVerificationLink = CatchAsyncError(
 
     // Send the email with the verification link
     try {
-      await sendMail({
+      await sendEmail({
         email: user.email,
         data,
         template: "verify-email.ejs",
@@ -201,7 +201,7 @@ export const verifyUser = CatchAsyncError(
       // Send email
 
       try {
-        await sendMail({
+        await sendEmail({
           email: user.email,
           data: { nickname: user.nickname },
           template: "email-verified.ejs",
@@ -268,7 +268,7 @@ export const login = CatchAsyncError(
         code: tempCode,
       };
       try {
-        await sendMail({
+        await sendEmail({
           email: user.email,
           template: "login-code.ejs",
           data,
@@ -344,7 +344,7 @@ export const resendOtp = CatchAsyncError(
           code: tempCode,
         };
         try {
-          await sendMail({
+          await sendEmail({
             email: user.email,
             template: "login-code.ejs",
             data,
@@ -494,7 +494,7 @@ export const forgotPassword = CatchAsyncError(
       };
       // Send the email with the reset link
       try {
-        await sendMail({
+        await sendEmail({
           email: user.email,
           data,
           template: "forgot-password.ejs",

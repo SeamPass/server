@@ -18,7 +18,6 @@ const catchAyncError_1 = require("../middleware/catchAyncError");
 const ErrorHandler_1 = __importDefault(require("../utils/ErrorHandler"));
 const user_model_1 = __importDefault(require("../models/user.model"));
 const crypto_1 = __importDefault(require("crypto"));
-const sendMail_1 = __importDefault(require("../utils/sendMail"));
 const logger_1 = __importDefault(require("../utils/logger"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const generateRandomCode_1 = require("../utils/generateRandomCode");
@@ -30,6 +29,7 @@ const sharp_1 = __importDefault(require("sharp"));
 const s3_1 = __importDefault(require("../utils/s3"));
 const client_s3_1 = require("@aws-sdk/client-s3");
 const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
+const sendMail_1 = __importDefault(require("../utils/sendMail"));
 exports.registerUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { nickname, email, hashedPassword, clientSalt } = req.body;
