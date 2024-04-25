@@ -546,7 +546,7 @@ exports.unlockUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => _
     }
     // Compare the client-side hashed password with the stored hashed password
     if (user.password !== password) {
-        return next(new ErrorHandler_1.default("Invalid password", 401));
+        return next(new ErrorHandler_1.default("Invalid password", 400));
     }
     const info = yield encryptionKeyModel_1.default.findOne({
         userId: user._id,
