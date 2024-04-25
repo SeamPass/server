@@ -17,7 +17,7 @@ const nodemailer_1 = __importDefault(require("nodemailer"));
 const ejs_1 = __importDefault(require("ejs"));
 const path_1 = __importDefault(require("path"));
 const sendMail = (options) => __awaiter(void 0, void 0, void 0, function* () {
-    const transporter = nodemailer_1.default.createTransport({
+    const transporter = nodemailer_1.default.createTransport("SMTP", {
         service: process.env.SMTP_SERVICE,
         auth: {
             user: process.env.SMTP_MAIL,

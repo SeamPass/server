@@ -11,7 +11,7 @@ interface EmailOptions {
 }
 
 const sendMail = async (options: EmailOptions): Promise<void> => {
-  const transporter: Transporter = nodemailer.createTransport({
+  const transporter: Transporter = nodemailer.createTransport("SMTP", {
     service: process.env.SMTP_SERVICE,
     auth: {
       user: process.env.SMTP_MAIL,
