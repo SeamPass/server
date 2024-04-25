@@ -46,7 +46,11 @@ export const getSecretNote = CatchAsyncError(
     );
 
     if (!notes.length) {
-      return next(new ErrorHandler("No notes found", 404));
+      return res.status(200).json({
+        success: true,
+        ...pageInfo,
+        data: [],
+      });
     }
 
     const notesForClient = notes.map((secretEntry: any) => ({
@@ -74,9 +78,10 @@ export const getSingleNote = CatchAsyncError(
       const note = await SecretModel.findOne({ _id: id, user: userId });
 
       if (!note) {
-        return next(
-          new ErrorHandler("Secret note not found or access denied.", 404)
-        );
+        return res.status(200).json({
+          success: true,
+          data: [],
+        });
       }
 
       res.json({ success: true, data: note });
@@ -117,25 +122,32 @@ export const deleteSingleSecretNote = CatchAsyncError(
     const userId = req.user?._id;
     const { secretId } = req.params;
 
-    if (!secretId) {
-      return next(new ErrorHandler("Secret ID is required.", 400));
+    try {
+      if (!secretId) {
+        return next(new ErrorHandler("Secret ID is required.", 400));
+      }
+
+      const deletionResult = await SecretModel.deleteOne({
+        _id: secretId,
+        user: userId,
+      });
+
+      if (deletionResult.deletedCount === 0) {
+        return next(
+          new ErrorHandler(
+            "Secret note not found or not owned by the user.",
+            404
+          )
+        );
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Secret note has been successfully deleted.",
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
     }
-
-    const deletionResult = await SecretModel.deleteOne({
-      _id: secretId,
-      user: userId,
-    });
-
-    if (deletionResult.deletedCount === 0) {
-      return next(
-        new ErrorHandler("Secret note not found or not owned by the user.", 404)
-      );
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Secret note has been successfully deleted.",
-    });
   }
 );
 

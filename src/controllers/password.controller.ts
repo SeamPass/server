@@ -74,7 +74,11 @@ export const getPassword = CatchAsyncError(
     );
 
     if (!passwords.length) {
-      return next(new ErrorHandler("No passwords found", 404));
+      return res.status(200).json({
+        success: true,
+        ...pageInfo,
+        data: [],
+      });
     }
 
     const passwordsForClient = passwords.map((passwordEntry: any) => ({
@@ -106,9 +110,10 @@ export const getSinglePassword = CatchAsyncError(
       const password = await PasswordModel.findOne({ _id: id, user: userId });
 
       if (!password) {
-        return next(
-          new ErrorHandler("Password not found or access denied.", 404)
-        );
+        return res.status(200).json({
+          success: true,
+          data: [],
+        });
       }
 
       res.json({ success: true, data: password });
@@ -149,25 +154,29 @@ export const deleteSinglePassword = CatchAsyncError(
     const userId = req?.user?._id as string;
     const { passwordId } = req.params;
 
-    if (!passwordId) {
-      return next(new ErrorHandler("Password ID is required.", 400));
+    try {
+      if (!passwordId) {
+        return next(new ErrorHandler("Password ID is required.", 400));
+      }
+
+      const deletionResult = await PasswordModel.deleteOne({
+        _id: passwordId,
+        user: userId,
+      });
+
+      if (deletionResult.deletedCount === 0) {
+        return next(
+          new ErrorHandler("Password not found or not owned by the user.", 404)
+        );
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Password has been successfully deleted.",
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
     }
-
-    const deletionResult = await PasswordModel.deleteOne({
-      _id: passwordId,
-      user: userId,
-    });
-
-    if (deletionResult.deletedCount === 0) {
-      return next(
-        new ErrorHandler("Password not found or not owned by the user.", 404)
-      );
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Password has been successfully deleted.",
-    });
   }
 );
 
@@ -175,29 +184,33 @@ export const deleteMultiplePasswords = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const userId = (req.user as any)?._id;
     const { passwordIds } = req.body;
-    if (!Array.isArray(passwordIds) || passwordIds.length === 0) {
-      return next(
-        new ErrorHandler("An array of password IDs is required.", 400)
-      );
+    try {
+      if (!Array.isArray(passwordIds) || passwordIds.length === 0) {
+        return next(
+          new ErrorHandler("An array of password IDs is required.", 400)
+        );
+      }
+
+      const deletionResult = await PasswordModel.deleteMany({
+        _id: { $in: passwordIds },
+        user: userId,
+      });
+
+      if (deletionResult.deletedCount === 0) {
+        return next(
+          new ErrorHandler(
+            "No passwords were deleted. They may not exist or not be owned by the user.",
+            404
+          )
+        );
+      }
+
+      res.status(200).json({
+        success: true,
+        message: `${deletionResult.deletedCount} passwords have been successfully deleted.`,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
     }
-
-    const deletionResult = await PasswordModel.deleteMany({
-      _id: { $in: passwordIds },
-      user: userId,
-    });
-
-    if (deletionResult.deletedCount === 0) {
-      return next(
-        new ErrorHandler(
-          "No passwords were deleted. They may not exist or not be owned by the user.",
-          404
-        )
-      );
-    }
-
-    res.status(200).json({
-      success: true,
-      message: `${deletionResult.deletedCount} passwords have been successfully deleted.`,
-    });
   }
 );

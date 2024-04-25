@@ -46,7 +46,11 @@ export const getWifi = CatchAsyncError(
     );
 
     if (!wifi.length) {
-      return next(new ErrorHandler("No notes found", 404));
+      return res.status(200).json({
+        success: true,
+        ...pageInfo,
+        data: [],
+      });
     }
 
     const wifiDetails = wifi.map((wifiEntry: any) => ({
@@ -70,15 +74,16 @@ export const getSingleWifi = CatchAsyncError(
     try {
       const { id } = req.params;
       const userId = req?.user?._id;
-      const note = await WifiModel.findOne({ _id: id, user: userId });
+      const wifi = await WifiModel.findOne({ _id: id, user: userId });
 
-      if (!note) {
-        return next(
-          new ErrorHandler("Wifi details not found or access denied.", 404)
-        );
+      if (!wifi) {
+        return res.status(200).json({
+          success: true,
+          data: [],
+        });
       }
 
-      res.json({ success: true, data: note });
+      res.json({ success: true, data: wifi });
     } catch (error) {
       next(error);
     }
