@@ -22,18 +22,18 @@ exports.addPassword = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => 
     try {
         const { websiteName, websiteUrl, username, password, usernameIv, passwordIv, passwordStrength, } = req.body;
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
-        // Check if the password already exists in the vault
-        const existingPassword = yield password_model_1.default.findOne({
-            user: userId,
-            websiteName,
-            url: websiteUrl,
-        });
-        if (existingPassword) {
-            return res.status(400).json({
-                success: false,
-                message: "Password already exists in the vault.",
-            });
-        }
+        // // Check if the password already exists in the vault
+        // const existingPassword = await PasswordModel.findOne({
+        //   user: userId,
+        //   websiteName,
+        //   url: websiteUrl,
+        // });
+        // if (existingPassword) {
+        //   return res.status(400).json({
+        //     success: false,
+        //     message: "Password already exists in the vault.",
+        //   });
+        // }
         const details = yield password_model_1.default.create({
             user: userId,
             websiteName,
@@ -106,7 +106,6 @@ exports.editPassword = (0, catchAyncError_1.CatchAsyncError)((req, res, next) =>
     res.status(200).json({
         success: true,
         message: "Password updated successfully",
-        data: updatedPassword,
     });
 }));
 exports.deleteSinglePassword = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {

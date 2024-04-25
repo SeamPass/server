@@ -41,10 +41,10 @@ const userSchema = new mongoose_1.default.Schema({
     clientSalt: {
         type: String,
     },
-    encryptedEncryptionKey: {
+    sek: {
         type: String,
     },
-    sgek: {
+    avatar: {
         type: String,
     },
     role: {
@@ -65,14 +65,6 @@ const userSchema = new mongoose_1.default.Schema({
     },
     tokenExpiration: {
         type: Date,
-    },
-    resetPasswordToken: {
-        type: String,
-        required: false,
-    },
-    resetPasswordExpire: {
-        type: Date,
-        required: false,
     },
 }, { timestamps: true });
 //compare password

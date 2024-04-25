@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.unlockUser = exports.updateUser = exports.getUser = exports.getSalt = exports.changePassword = exports.resendResetLink = exports.forgotPassword = exports.updateAccessToken = exports.logoutUser = exports.login = exports.verifyUser = exports.resendVerificationLink = exports.registerUser = void 0;
+exports.getUser = exports.uploadProfileImage = exports.unlockUser = exports.updateUser = exports.getSalt = exports.changePassword = exports.forgotPassword = exports.updateAccessToken = exports.logoutUser = exports.resendOtp = exports.login = exports.verifyUser = exports.resendVerificationLink = exports.registerUser = void 0;
 require("dotenv").config();
 const catchAyncError_1 = require("../middleware/catchAyncError");
 const ErrorHandler_1 = __importDefault(require("../utils/ErrorHandler"));
@@ -26,6 +26,10 @@ const emailVerification_model_1 = __importDefault(require("../models/emailVerifi
 const jwt_1 = require("../utils/jwt");
 const minutesToFutureTimestamp_1 = require("../utils/minutesToFutureTimestamp");
 const encryptionKeyModel_1 = __importDefault(require("../models/encryptionKeyModel"));
+const sharp_1 = __importDefault(require("sharp"));
+const s3_1 = __importDefault(require("../utils/s3"));
+const client_s3_1 = require("@aws-sdk/client-s3");
+const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
 exports.registerUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { nickname, email, hashedPassword, clientSalt } = req.body;
@@ -40,6 +44,9 @@ exports.registerUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) =>
         // Generate a unique encryption key for each user
         const encryptionSalt = crypto_1.default.randomBytes(32).toString("hex");
         const verificationToken = crypto_1.default.randomBytes(32).toString("hex");
+        const currentTime = new Date();
+        console.log("current time", currentTime);
+        let tokenExpiration = new Date(currentTime.getTime() + 3600000);
         // Create new user with hashed password and encrypted encryption key
         const newUser = yield user_model_1.default.create({
             nickname,
@@ -48,10 +55,12 @@ exports.registerUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) =>
             clientSalt,
             verificationToken,
             ps: encryptionSalt,
+            tokenExpiration,
         });
         const data = {
             token: verificationToken,
             name: newUser.nickname,
+            email: newUser.email,
         };
         try {
             yield (0, sendMail_1.default)({
@@ -67,7 +76,7 @@ exports.registerUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) =>
                 message: "Failed to send Welcome email",
             });
         }
-        // Optional: Send verification email or perform other post-registration tasks
+        //Send verification email
         res.status(201).json({
             success: true,
             message: "Account created successfully. Please check your email to verify your account.",
@@ -83,85 +92,6 @@ exports.registerUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) =>
         next(new ErrorHandler_1.default(error.message, 500));
     }
 }));
-// export const registerUser = CatchAsyncError(
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//       const { nickname, email, password } = req.body;
-//       // Validation checks
-//       if (!nickname || !email || !password) {
-//         return next(
-//           new ErrorHandler("Please provide nickname, email, and password.", 400)
-//         );
-//       }
-//       const isEmailExist = await userModel.findOne({ email });
-//       if (isEmailExist) {
-//         return next(new ErrorHandler("Email already exists.", 400));
-//       }
-//       const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
-//       if (!passwordRegex.test(password)) {
-//         return next(
-//           new ErrorHandler(
-//             "Password must include numbers, lowercase and uppercase letters, and be at least 8 characters long.",
-//             400
-//           )
-//         );
-//       }
-//       // Generate salt and hash the password
-//       const salt = generateSalt();
-//       const hashedPassword = await hashPassword(password, salt);
-//       // Generate a unique encryption key for each user
-//       const encryptionKey = crypto.randomBytes(32).toString("hex");
-//       const esalt = generateSalt(); // Generate a separate salt for encryption
-//       const encryptedEncryptionKey = encrypt(
-//         encryptionKey,
-//         hashedPassword,
-//         esalt
-//       );
-//       const verificationToken = crypto.randomBytes(32).toString("hex");
-//       // Create new user with hashed password and encrypted encryption key
-//       const newUser = await userModel.create({
-//         nickname,
-//         email,
-//         password: hashedPassword,
-//         salt,
-//         encryptedEncryptionKey,
-//         esalt,
-//         verificationToken,
-//       });
-//       const data = {
-//         token: verificationToken,
-//         name: newUser.nickname,
-//       };
-//       try {
-//         await sendMail({
-//           email: newUser.email,
-//           data,
-//           template: "verify-email.ejs",
-//           subject: "Welcome",
-//         });
-//       } catch (err) {
-//         console.error("Failed to send email:", err);
-//         return res.status(500).json({
-//           success: false,
-//           message: "Failed to send Welcome email",
-//         });
-//       }
-//       // Optional: Send verification email or perform other post-registration tasks
-//       res.status(201).json({
-//         success: true,
-//         message:
-//           "Account created successfully. Please check your email to verify your account.",
-//         data: {
-//           id: newUser._id,
-//           nickname: newUser.nickname,
-//           email: newUser.email,
-//         },
-//       });
-//     } catch (error: any) {
-//       next(new ErrorHandler(error.message, 500));
-//     }
-//   }
-// );
 exports.resendVerificationLink = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { email } = req.body;
     if (!email) {
@@ -172,8 +102,8 @@ exports.resendVerificationLink = (0, catchAyncError_1.CatchAsyncError)((req, res
         return next(new ErrorHandler_1.default("Email not found", 404));
     }
     if (user.isVerified) {
-        return res.status(200).json({
-            success: true,
+        return res.status(409).json({
+            success: false,
             message: "Your account is already verified.",
         });
     }
@@ -185,26 +115,26 @@ exports.resendVerificationLink = (0, catchAyncError_1.CatchAsyncError)((req, res
     const data = {
         token: newVerificationToken,
         name: user.nickname,
+        email: user.email,
     };
-    // Send the email with the reset link
+    // Send the email with the verification link
     try {
-    }
-    catch (err) {
-        return res.status(500).json({
-            success: false,
-            message: "Failed to send password reset email",
+        yield (0, sendMail_1.default)({
+            email: user.email,
+            data,
+            template: "verify-email.ejs",
+            subject: "Verify Your Email Address",
         });
-    }
-    // Resend the email
-    try {
-        /////
         res.status(200).json({
             success: true,
             message: "Verification link has been resent to your email address.",
         });
     }
-    catch (error) {
-        next(new ErrorHandler_1.default("Failed to send verification email", 500));
+    catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: "Failed to send verification email.",
+        });
     }
 }));
 // VERIFY USER
@@ -215,12 +145,13 @@ exports.verifyUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => _
             res.status(400);
             return next(new ErrorHandler_1.default("Token is missing", 400));
         }
+        console.log(token);
         const user = yield user_model_1.default.findOne({
             verificationToken: token,
             tokenExpiration: { $gt: new Date() }, // Check if the token is not expired
         });
+        console.log("hefjifiejidj", user === null || user === void 0 ? void 0 : user.tokenExpiration);
         if (!user) {
-            res.status(400);
             return next(new ErrorHandler_1.default("User does not exist or the token has expired. Please request a new verification link.", 400));
         }
         user.isVerified = true;
@@ -232,14 +163,21 @@ exports.verifyUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => _
         yield user.save();
         // Log the successful email verification
         logger_1.default.info(`Email verified for user ID: ${user._id}`);
-        // Send email (uncomment this section if needed)
-        /*
-          sendMail({
-            email: user.email,
-            template: "verification-successful.ejs",
-            subject: "Verification Successful",
-          });
-          */
+        // Send email
+        try {
+            yield (0, sendMail_1.default)({
+                email: user.email,
+                data: { nickname: user.nickname },
+                template: "email-verified.ejs",
+                subject: "Verification Successful",
+            });
+        }
+        catch (err) {
+            return res.status(500).json({
+                success: false,
+                message: "Failed to send Email verified",
+            });
+        }
         // Response to the client
         res
             .status(200)
@@ -262,6 +200,9 @@ exports.login = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awai
     if (user.password !== password) {
         return next(new ErrorHandler_1.default("Invalid password", 401));
     }
+    if (!user.isVerified) {
+        return next(new ErrorHandler_1.default("Please verify your account before proceeding to login", 401));
+    }
     // Check if two-step verification is enabled for the user
     const emailVerification = yield emailVerification_model_1.default.findOne({
         userId: user._id,
@@ -273,8 +214,23 @@ exports.login = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awai
         emailVerification.expirationTime = new Date(Date.now() + 3600000); // 1 hour expiration
         yield emailVerification.save();
         // Send the code to the user's email
-        // TODO: Implement sendVerificationEmail function to send the code
-        // await sendVerificationEmail(user.email, tempCode);
+        const data = {
+            code: tempCode,
+        };
+        try {
+            yield (0, sendMail_1.default)({
+                email: user.email,
+                template: "login-code.ejs",
+                data,
+                subject: "OTP",
+            });
+        }
+        catch (err) {
+            return res.status(500).json({
+                success: false,
+                message: "Failed to send Email verified",
+            });
+        }
         // Inform the user that a verification code has been sent
         return res.status(200).json({
             success: true,
@@ -302,6 +258,56 @@ exports.login = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awai
         (0, jwt_1.sendToken)(AllInfo, 200, res);
     }
 }));
+//Resend User OTP
+exports.resendOtp = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    // Find the user based on the email
+    const user = yield user_model_1.default.findOne({ email });
+    if (!user) {
+        return next(new ErrorHandler_1.default("User not found", 404));
+    }
+    try {
+        // Check if two-step verification is enabled for the user
+        const emailVerification = yield emailVerification_model_1.default.findOne({
+            userId: user._id,
+        });
+        if (emailVerification && emailVerification.isForLoginEnabled) {
+            // Generate a new verification code
+            const tempCode = (0, generateRandomCode_1.generateRandomCode)(6);
+            emailVerification.emailVerificationCode = tempCode;
+            emailVerification.expirationTime = new Date(Date.now() + 3600000); // 1 hour expiration
+            yield emailVerification.save();
+            // Send the code to the user's email
+            const data = {
+                code: tempCode,
+            };
+            try {
+                yield (0, sendMail_1.default)({
+                    email: user.email,
+                    template: "login-code.ejs",
+                    data,
+                    subject: "OTP",
+                });
+                // Inform the user that a verification code has been sent
+                return res.status(200).json({
+                    success: true,
+                    message: "Please verify the code sent to your email.",
+                    tempCode,
+                    is2StepEnabled: emailVerification.isForLoginEnabled,
+                });
+            }
+            catch (err) {
+                return res.status(500).json({
+                    success: false,
+                    message: "Failed to send Email verified",
+                });
+            }
+        }
+    }
+    catch (error) {
+        return next(new ErrorHandler_1.default(error.message, 400));
+    }
+}));
 //Logout User
 exports.logoutUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -318,7 +324,6 @@ exports.logoutUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => _
             maxAge: 1,
         });
         res.json({ success: true, message: "Logged out successfully" });
-        // Optional: Log the user logout action
         // Assuming logger is defined and you can obtain the user ID from the request (if the user was authenticated)
         // logger.info(`User ID: ${req.user?._id} logged out`);
     }
@@ -352,11 +357,7 @@ exports.updateAccessToken = (0, catchAyncError_1.CatchAsyncError)((req, res, nex
             secure: process.env.NODE_ENV === "production",
         };
         // Set cookies for the new tokens
-        res.cookie("access_token", accessToken, Object.assign(Object.assign({}, cookieOptions), { maxAge: (0, minutesToFutureTimestamp_1.minutesToFutureTimestamp)(Number(process.env.ACCESS_TOKEN_EXPIRE)) })); // 15 minutes
-        // res.cookie("refresh_token", refreshToken, {
-        //   ...cookieOptions,
-        //   maxAge: 604800000,
-        // }); // 7 days
+        res.cookie("access_token", accessToken, Object.assign(Object.assign({}, cookieOptions), { maxAge: (0, minutesToFutureTimestamp_1.minutesToFutureTimestamp)(Number(process.env.ACCESS_TOKEN_EXPIRE)) }));
         res.status(200).json({
             success: true,
             accessToken,
@@ -430,44 +431,54 @@ exports.forgotPassword = (0, catchAyncError_1.CatchAsyncError)((req, res, next) 
         return next(new ErrorHandler_1.default(error.message, 500));
     }
 }));
-//Resend Reset Password Link
-exports.resendResetLink = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { email } = req.body;
-    let user;
-    if (!email) {
-        return next(new ErrorHandler_1.default("Please provide your email address", 400));
-    }
-    user = yield user_model_1.default.findOne({ email });
-    if (!user) {
-        return next(new ErrorHandler_1.default("Email not found", 404));
-    }
-    // Check if the user already requested a password reset and the token is not expired
-    if (user.resetPasswordToken &&
-        user.resetPasswordExpire &&
-        user.resetPasswordExpire > new Date()) {
-        // Generate a new password reset token
-        const resetToken = crypto_1.default.randomBytes(20).toString("hex");
-        const resetPasswordToken = crypto_1.default
-            .createHash("sha256")
-            .update(resetToken)
-            .digest("hex");
-        user.resetPasswordToken = resetPasswordToken;
-        user.resetPasswordExpire = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour from now
-        yield user.save();
-        // Resend the email with the reset link
-        const resetUrl = `${req.protocol}://${req.get("host")}/password-reset/${resetToken}`;
-        // Call a function to send the email
-        // await sendResetPasswordEmail(user.email, resetUrl);
-        res.status(200).json({
-            success: true,
-            message: "Password reset link has been resent to your email address.",
-        });
-    }
-    else {
-        // If no reset request was made or the token expired, inform the user
-        return next(new ErrorHandler_1.default("No password reset request was found or the link has expired", 400));
-    }
-}));
+// //Resend Reset Password Link
+// export const resendResetLink = CatchAsyncError(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const { email } = req.body;
+//     let user;
+//     if (!email) {
+//       return next(new ErrorHandler("Please provide your email address", 400));
+//     }
+//     user = await userModel.findOne({ email });
+//     if (!user) {
+//       return next(new ErrorHandler("Email not found", 404));
+//     }
+//     // Check if the user already requested a password reset and the token is not expired
+//     if (
+//       user.resetPasswordToken &&
+//       user.resetPasswordExpire &&
+//       user.resetPasswordExpire > new Date()
+//     ) {
+//       // Generate a new password reset token
+//       const resetToken = crypto.randomBytes(20).toString("hex");
+//       const resetPasswordToken = crypto
+//         .createHash("sha256")
+//         .update(resetToken)
+//         .digest("hex");
+//       user.resetPasswordToken = resetPasswordToken;
+//       user.resetPasswordExpire = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour from now
+//       await user.save();
+//       // Resend the email with the reset link
+//       const resetUrl = `${req.protocol}://${req.get(
+//         "host"
+//       )}/password-reset/${resetToken}`;
+//       // Call a function to send the email
+//       // await sendResetPasswordEmail(user.email, resetUrl);
+//       res.status(200).json({
+//         success: true,
+//         message: "Password reset link has been resent to your email address.",
+//       });
+//     } else {
+//       // If no reset request was made or the token expired, inform the user
+//       return next(
+//         new ErrorHandler(
+//           "No password reset request was found or the link has expired",
+//           400
+//         )
+//       );
+//     }
+//   }
+// );
 const changePassword = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -490,7 +501,7 @@ const changePassword = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         }
         // Update the user's password with the new hashed password and new client-side generated salt
         user.password = newPassword;
-        user.clientSalt = newSalt; // Assuming you store the salt used for hashing the password
+        user.clientSalt = newSalt;
         yield user.save();
         const info = yield encryptionKeyModel_1.default.findOne({
             userId: user._id,
@@ -512,40 +523,18 @@ exports.getSalt = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __aw
     }
     res.json({ success: true, salt: user.clientSalt });
 }));
-exports.getUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.updateUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _b;
     const userId = (_b = req === null || req === void 0 ? void 0 : req.user) === null || _b === void 0 ? void 0 : _b._id;
-    try {
-        // Find the user based on the userId and retrieve the salt
-        const user = yield user_model_1.default.findById({ _id: userId });
-        if (!user) {
-            return next(new ErrorHandler_1.default("User not found", 404));
-        }
-        const isEmailVerified = yield emailVerification_model_1.default.findOne({
-            userId,
-        });
-        const userInfo = Object.assign(Object.assign({}, user.toJSON()), { password: undefined, salt: undefined, ps: undefined, sgek: undefined, verificationToken: undefined, is2StepEnabled: isEmailVerified === null || isEmailVerified === void 0 ? void 0 : isEmailVerified.isForLoginEnabled });
-        return res.status(200).json({
-            success: true,
-            user: userInfo,
-        });
-    }
-    catch (error) {
-        return next(new ErrorHandler_1.default(error.message, 500));
-    }
-}));
-exports.updateUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c;
-    const userId = (_c = req === null || req === void 0 ? void 0 : req.user) === null || _c === void 0 ? void 0 : _c._id;
     const { nickname, email } = req.body;
     try {
         const updatedUser = yield user_model_1.default
             .findByIdAndUpdate(userId, { nickname, email }, { new: true, runValidators: true })
-            .select("-password -salt -ps -sgek -verificationToken -tokenExpiration -resetPasswordToken -resetPasswordExpire");
+            .select("-password -salt -ps -sek -verificationToken -tokenExpiration -resetPasswordToken -resetPasswordExpire");
         if (!updatedUser) {
             return next(new ErrorHandler_1.default("User not found", 404));
         }
-        const userInfo = Object.assign(Object.assign({}, updatedUser.toJSON()), { password: undefined, salt: undefined, ps: undefined, sgek: undefined, verificationToken: undefined, tokenExpiration: undefined, resetPasswordToken: undefined, resetPasswordExpire: undefined });
+        const userInfo = Object.assign(Object.assign({}, updatedUser.toJSON()), { password: undefined, salt: undefined, ps: undefined, sek: undefined, verificationToken: undefined, tokenExpiration: undefined });
         return res.status(200).json({
             success: true,
             message: "User profile updated",
@@ -572,4 +561,70 @@ exports.unlockUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => _
     }).lean();
     // Inform the user that a verification code has been sent
     return res.status(200).json(Object.assign(Object.assign({ success: true }, info), { message: "Account Unlocked" }));
+}));
+const s3BucketName = process.env.S3_BUCKET_NAME;
+const imageName = (0, generateRandomCode_1.generateSessionIdentifier)();
+exports.uploadProfileImage = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c, _d;
+    if (!req.file) {
+        return res.status(400).send("No file uploaded.");
+    }
+    try {
+        const buffer = yield (0, sharp_1.default)((_c = req.file) === null || _c === void 0 ? void 0 : _c.buffer)
+            .resize({ height: 500, width: 500, fit: "cover" })
+            .toBuffer();
+        const params = {
+            Bucket: s3BucketName,
+            Key: imageName,
+            Body: buffer,
+            ContentType: (_d = req.file) === null || _d === void 0 ? void 0 : _d.mimetype,
+        };
+        const command = new client_s3_1.PutObjectCommand(params);
+        yield s3_1.default.send(command);
+        const updatedUser = yield user_model_1.default.findOneAndUpdate({ _id: req.user.id }, { avatar: imageName }, { new: true });
+        if (!updatedUser) {
+            return res.status(404).send("User not found.");
+        }
+        res.status(200).send({
+            success: true,
+            message: "Profile picture uploaded successfully.",
+        });
+    }
+    catch (error) {
+        return next(new ErrorHandler_1.default(error.message, 500));
+    }
+}));
+exports.getUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _e;
+    const userId = (_e = req === null || req === void 0 ? void 0 : req.user) === null || _e === void 0 ? void 0 : _e._id;
+    try {
+        const user = yield user_model_1.default.findById(userId);
+        const emailVerification = yield emailVerification_model_1.default.findOne({
+            userId,
+        });
+        if (!user) {
+            return next(new ErrorHandler_1.default("User not found", 404));
+        }
+        let avatarUrl = "";
+        if (user === null || user === void 0 ? void 0 : user.avatar) {
+            const getObjectParams = {
+                Bucket: s3BucketName,
+                Key: user.avatar,
+            };
+            const command = new client_s3_1.GetObjectCommand(getObjectParams);
+            avatarUrl = yield (0, s3_request_presigner_1.getSignedUrl)(s3_1.default, command, { expiresIn: 3600 });
+        }
+        const is2StepEnabled = emailVerification
+            ? emailVerification.isForLoginEnabled
+            : false;
+        const userInfo = Object.assign(Object.assign({}, user.toJSON()), { password: undefined, salt: undefined, ps: undefined, sek: undefined, verificationToken: undefined, is2StepEnabled, avatar: avatarUrl });
+        return res.status(200).json({
+            success: true,
+            user: userInfo,
+            is2StepEnabled,
+        });
+    }
+    catch (error) {
+        return next(new ErrorHandler_1.default(error.message, 500));
+    }
 }));

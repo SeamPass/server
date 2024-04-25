@@ -25,21 +25,20 @@ exports.enableEmailVerificationForLogin = (0, catchAyncError_1.CatchAsyncError)(
     var _a;
     const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
     const emailVerificationCode = (0, generateRandomCode_1.generateRandomCode)(6);
-    const expirationTime = new Date(Date.now() + 3600000);
+    const expirationTime = new Date(Date.now() + 900000);
     yield emailVerification_model_1.default.findOneAndUpdate({ userId }, {
         emailVerificationCode: emailVerificationCode,
         expirationTime: expirationTime,
     }, { upsert: true, new: true });
     const user = yield user_model_1.default.findById({ _id: userId });
     // Send the verification code to the user's email
-    const data = {
-        code: emailVerificationCode,
-        name: user === null || user === void 0 ? void 0 : user.nickname,
-    };
     try {
         yield (0, sendMail_1.default)({
             email: user === null || user === void 0 ? void 0 : user.email,
-            data,
+            data: {
+                code: emailVerificationCode,
+                nickname: user === null || user === void 0 ? void 0 : user.nickname,
+            },
             template: "enable2Step-code.ejs",
             subject: "Code",
         });
@@ -61,6 +60,7 @@ exports.verifyEmailVerificationOnEnable = (0, catchAyncError_1.CatchAsyncError)(
     const { verificationCode } = req.body;
     const userId = (_b = req.user) === null || _b === void 0 ? void 0 : _b._id;
     const emailVerification = yield emailVerification_model_1.default.findOne({ userId });
+    const user = yield user_model_1.default.findById({ _id: userId });
     if (!emailVerification) {
         return res.status(404).json({
             success: false,
@@ -70,8 +70,24 @@ exports.verifyEmailVerificationOnEnable = (0, catchAyncError_1.CatchAsyncError)(
     if (verificationCode === emailVerification.emailVerificationCode &&
         emailVerification.expirationTime > new Date()) {
         emailVerification.emailVerificationCode = undefined;
-        emailVerification.isForLoginEnabled = true; // Set to true after successful verification
+        emailVerification.isForLoginEnabled = true;
         yield emailVerification.save();
+        try {
+            yield (0, sendMail_1.default)({
+                email: user === null || user === void 0 ? void 0 : user.email,
+                data: {
+                    name: user === null || user === void 0 ? void 0 : user.nickname,
+                },
+                template: "enable2Step.ejs",
+                subject: "Two step verification enabled!!",
+            });
+        }
+        catch (err) {
+            return res.status(500).json({
+                success: false,
+                message: "Failed to send Welcome email",
+            });
+        }
         res.status(200).json({
             success: true,
             message: "Email verification enabled successfully.",
@@ -88,6 +104,21 @@ exports.disableEmailVerificationForLogin = (0, catchAyncError_1.CatchAsyncError)
     var _c;
     const userId = (_c = req.user) === null || _c === void 0 ? void 0 : _c._id;
     yield emailVerification_model_1.default.findOneAndUpdate({ userId }, { isForLoginEnabled: false }, { new: true });
+    const user = yield user_model_1.default.findById({ _id: userId });
+    try {
+        yield (0, sendMail_1.default)({
+            email: user === null || user === void 0 ? void 0 : user.email,
+            template: "disable2Step.ejs",
+            data: { name: user === null || user === void 0 ? void 0 : user.nickname },
+            subject: "Two step verification disabled!!",
+        });
+    }
+    catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: "Failed to send Welcome email",
+        });
+    }
     res.status(200).json({
         success: true,
         message: "Email verification for login has been disabled.",

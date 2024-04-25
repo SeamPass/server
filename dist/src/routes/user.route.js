@@ -8,6 +8,7 @@ const user_controller_1 = require("../controllers/user.controller");
 const auth_1 = require("../middleware/auth");
 const rateLimiter_1 = require("../middleware/rateLimiter");
 const emailVerification_controller_1 = require("../controllers/emailVerification.controller");
+const multer_1 = __importDefault(require("multer"));
 const userRouter = express_1.default.Router();
 // For resend reset link
 const resendResetLinkLimiter = (0, rateLimiter_1.createRateLimiter)({
@@ -20,6 +21,8 @@ const loginRateLimiter = (0, rateLimiter_1.createRateLimiter)({
     max: 3, // limit each IP to 3 login attempts per 15-minute window
     message: "Try again in the next 15 minutes.",
 });
+const storage = multer_1.default.memoryStorage();
+const upload = (0, multer_1.default)({ storage: storage });
 userRouter.post("/register-user", user_controller_1.registerUser);
 userRouter.post("/verify", user_controller_1.verifyUser);
 userRouter.post("/resend-verification-link", user_controller_1.resendVerificationLink);
@@ -31,10 +34,16 @@ userRouter.post("/forgot-password/confirm", user_controller_1.forgotPassword);
 userRouter.get("/get-user", auth_1.isAuthenticated, user_controller_1.getUser);
 userRouter.patch("/update-user", auth_1.isAuthenticated, user_controller_1.updateUser);
 userRouter.post("/unlock-account", auth_1.isAuthenticated, user_controller_1.unlockUser);
-userRouter.post("/forgot-password/resend", resendResetLinkLimiter, user_controller_1.resendResetLink);
+// userRouter.post(
+//   "/forgot-password/resend",
+//   resendResetLinkLimiter,
+//   resendResetLink
+// );
 userRouter.post("/change-password", auth_1.isAuthenticated, user_controller_1.changePassword);
 userRouter.post("/enable2Step", auth_1.isAuthenticated, emailVerification_controller_1.enableEmailVerificationForLogin);
 userRouter.post("/disable2Step", auth_1.isAuthenticated, emailVerification_controller_1.disableEmailVerificationForLogin);
 userRouter.post("/verify-code", auth_1.isAuthenticated, emailVerification_controller_1.verifyEmailVerificationOnEnable);
 userRouter.post("/verify-login-code", emailVerification_controller_1.verifyEmailVerificationCode);
+userRouter.post("/resend-otp", user_controller_1.resendOtp);
+userRouter.post("/upload", upload.single("avatar"), auth_1.isAuthenticated, user_controller_1.uploadProfileImage);
 exports.default = userRouter;

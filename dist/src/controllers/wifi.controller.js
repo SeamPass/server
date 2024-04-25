@@ -40,7 +40,7 @@ exports.getWifi = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __aw
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const searchTerms = req.query.search;
-    const searchFields = ["name"];
+    const searchFields = ["wifiName"];
     // Retrieve all notes for the user with pagination
     const { results: wifi, pageInfo } = yield (0, pagination_1.paginate)(wifi_model_1.default, { user: userId }, searchTerms, searchFields, { page, limit });
     if (!wifi.length) {
@@ -72,10 +72,10 @@ exports.getSingleWifi = (0, catchAyncError_1.CatchAsyncError)((req, res, next) =
 }));
 exports.editWifiDetails = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _d;
-    const { passwordId } = req.params;
+    const { wifiId } = req.params;
     const updates = req.body;
     const userId = (_d = req.user) === null || _d === void 0 ? void 0 : _d._id;
-    const updatedWifi = yield wifi_model_1.default.findOneAndUpdate({ _id: passwordId, user: userId }, { $set: updates }, { new: true, runValidators: true });
+    const updatedWifi = yield wifi_model_1.default.findOneAndUpdate({ _id: wifiId, user: userId }, { $set: updates }, { new: true, runValidators: true });
     if (!updatedWifi) {
         return next(new ErrorHandler_1.default("Wifi not found or not owned by the user", 404));
     }

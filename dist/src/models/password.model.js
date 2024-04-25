@@ -52,11 +52,6 @@ const PasswordSchema = new mongoose_1.Schema({
         type: String,
         required: true,
     },
-    compromised: {
-        type: Boolean,
-        required: true,
-        default: false,
-    },
 }, {
     timestamps: true,
 });
