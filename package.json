@@ -9,7 +9,7 @@
     "test": "jest",
     "dev": "ts-node-dev --respawn --transpile-only server.ts",
     "type-check": "tsc --noEmit",
-    "build": "tsc"
+    "build": "tsc && copyfiles -u 1 src/mail/**/*.ejs dist/src/mail"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.556.0",
@@ -46,6 +46,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/mongoose": "^5.11.97",
     "@types/nodemailer": "^6.4.14",
+    "copyfiles": "^2.4.1",
     "eslint": "^8.57.0",
     "ts-jest": "^29.1.2"
   }

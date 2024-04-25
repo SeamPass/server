@@ -16,19 +16,15 @@ require("dotenv").config();
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const ejs_1 = __importDefault(require("ejs"));
 const path_1 = __importDefault(require("path"));
-const sendEmail = (options) => __awaiter(void 0, void 0, void 0, function* () {
+const sendMail = (options) => __awaiter(void 0, void 0, void 0, function* () {
     const transporter = nodemailer_1.default.createTransport({
-        service: "hotmail",
-        // port: process.env.STMP_PORT,
-        // secure: process.env.STMP_SECURE,
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || "587"),
+        service: process.env.SMTP_SERVICE,
         auth: {
             user: process.env.SMTP_MAIL,
             pass: process.env.SMTP_PASSWORD,
         },
-    });
-    console.log({
-        user: process.env.SMTP_MAIL,
-        pass: process.env.SMTP_PASSWORD,
     });
     const { email, subject, template, data } = options;
     // get the path to the email template file
@@ -39,14 +35,12 @@ const sendEmail = (options) => __awaiter(void 0, void 0, void 0, function* () {
         data,
         website_url,
     });
-    console.log(html);
     const mailOptions = {
         from: process.env.SMTP_MAIL,
         to: email,
         subject,
         html,
     };
-    console.log(mailOptions);
     yield transporter.sendMail(mailOptions);
 });
-exports.default = sendEmail;
+exports.default = sendMail;
