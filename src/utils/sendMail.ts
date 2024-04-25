@@ -11,11 +11,16 @@ interface EmailOptions {
 }
 
 const sendMail = async (options: EmailOptions): Promise<void> => {
-  const transporter: Transporter = nodemailer.createTransport("SMTP", {
-    service: process.env.SMTP_SERVICE,
+  const transporter: Transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || "587"),
+    secure: false,
     auth: {
       user: process.env.SMTP_MAIL,
       pass: process.env.SMTP_PASSWORD,
+    },
+    tls: {
+      ciphers: "SSLv3",
     },
   });
 
