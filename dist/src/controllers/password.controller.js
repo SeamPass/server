@@ -63,7 +63,7 @@ exports.getPassword = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => 
     // Retrieve all passwords for the user with pagination
     const { results: passwords, pageInfo } = yield (0, pagination_1.paginate)(password_model_1.default, { user: userId }, searchTerms, searchFields, { page, limit });
     if (!passwords.length) {
-        return next(new ErrorHandler_1.default("No passwords found", 404));
+        return res.status(200).json(Object.assign(Object.assign({ success: true }, pageInfo), { data: [] }));
     }
     const passwordsForClient = passwords.map((passwordEntry) => ({
         id: passwordEntry._id,
@@ -86,7 +86,10 @@ exports.getSinglePassword = (0, catchAyncError_1.CatchAsyncError)((req, res, nex
         const userId = (_c = req === null || req === void 0 ? void 0 : req.user) === null || _c === void 0 ? void 0 : _c._id;
         const password = yield password_model_1.default.findOne({ _id: id, user: userId });
         if (!password) {
-            return next(new ErrorHandler_1.default("Password not found or access denied.", 404));
+            return res.status(200).json({
+                success: true,
+                data: [],
+            });
         }
         res.json({ success: true, data: password });
     }
@@ -112,37 +115,47 @@ exports.deleteSinglePassword = (0, catchAyncError_1.CatchAsyncError)((req, res, 
     var _e;
     const userId = (_e = req === null || req === void 0 ? void 0 : req.user) === null || _e === void 0 ? void 0 : _e._id;
     const { passwordId } = req.params;
-    if (!passwordId) {
-        return next(new ErrorHandler_1.default("Password ID is required.", 400));
+    try {
+        if (!passwordId) {
+            return next(new ErrorHandler_1.default("Password ID is required.", 400));
+        }
+        const deletionResult = yield password_model_1.default.deleteOne({
+            _id: passwordId,
+            user: userId,
+        });
+        if (deletionResult.deletedCount === 0) {
+            return next(new ErrorHandler_1.default("Password not found or not owned by the user.", 404));
+        }
+        res.status(200).json({
+            success: true,
+            message: "Password has been successfully deleted.",
+        });
     }
-    const deletionResult = yield password_model_1.default.deleteOne({
-        _id: passwordId,
-        user: userId,
-    });
-    if (deletionResult.deletedCount === 0) {
-        return next(new ErrorHandler_1.default("Password not found or not owned by the user.", 404));
+    catch (error) {
+        return next(new ErrorHandler_1.default(error.message, 500));
     }
-    res.status(200).json({
-        success: true,
-        message: "Password has been successfully deleted.",
-    });
 }));
 exports.deleteMultiplePasswords = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _f;
     const userId = (_f = req.user) === null || _f === void 0 ? void 0 : _f._id;
     const { passwordIds } = req.body;
-    if (!Array.isArray(passwordIds) || passwordIds.length === 0) {
-        return next(new ErrorHandler_1.default("An array of password IDs is required.", 400));
+    try {
+        if (!Array.isArray(passwordIds) || passwordIds.length === 0) {
+            return next(new ErrorHandler_1.default("An array of password IDs is required.", 400));
+        }
+        const deletionResult = yield password_model_1.default.deleteMany({
+            _id: { $in: passwordIds },
+            user: userId,
+        });
+        if (deletionResult.deletedCount === 0) {
+            return next(new ErrorHandler_1.default("No passwords were deleted. They may not exist or not be owned by the user.", 404));
+        }
+        res.status(200).json({
+            success: true,
+            message: `${deletionResult.deletedCount} passwords have been successfully deleted.`,
+        });
     }
-    const deletionResult = yield password_model_1.default.deleteMany({
-        _id: { $in: passwordIds },
-        user: userId,
-    });
-    if (deletionResult.deletedCount === 0) {
-        return next(new ErrorHandler_1.default("No passwords were deleted. They may not exist or not be owned by the user.", 404));
+    catch (error) {
+        return next(new ErrorHandler_1.default(error.message, 500));
     }
-    res.status(200).json({
-        success: true,
-        message: `${deletionResult.deletedCount} passwords have been successfully deleted.`,
-    });
 }));

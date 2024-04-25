@@ -44,7 +44,7 @@ exports.getSecretNote = (0, catchAyncError_1.CatchAsyncError)((req, res, next) =
     // Retrieve all notes for the user with pagination
     const { results: notes, pageInfo } = yield (0, pagination_1.paginate)(secret_model_1.default, { user: userId }, searchTerms, searchFields, { page, limit });
     if (!notes.length) {
-        return next(new ErrorHandler_1.default("No notes found", 404));
+        return res.status(200).json(Object.assign(Object.assign({ success: true }, pageInfo), { data: [] }));
     }
     const notesForClient = notes.map((secretEntry) => ({
         id: secretEntry._id,
@@ -62,7 +62,10 @@ exports.getSingleNote = (0, catchAyncError_1.CatchAsyncError)((req, res, next) =
         const userId = (_c = req === null || req === void 0 ? void 0 : req.user) === null || _c === void 0 ? void 0 : _c._id;
         const note = yield secret_model_1.default.findOne({ _id: id, user: userId });
         if (!note) {
-            return next(new ErrorHandler_1.default("Secret note not found or access denied.", 404));
+            return res.status(200).json({
+                success: true,
+                data: [],
+            });
         }
         res.json({ success: true, data: note });
     }
@@ -89,20 +92,25 @@ exports.deleteSingleSecretNote = (0, catchAyncError_1.CatchAsyncError)((req, res
     var _e;
     const userId = (_e = req.user) === null || _e === void 0 ? void 0 : _e._id;
     const { secretId } = req.params;
-    if (!secretId) {
-        return next(new ErrorHandler_1.default("Secret ID is required.", 400));
+    try {
+        if (!secretId) {
+            return next(new ErrorHandler_1.default("Secret ID is required.", 400));
+        }
+        const deletionResult = yield secret_model_1.default.deleteOne({
+            _id: secretId,
+            user: userId,
+        });
+        if (deletionResult.deletedCount === 0) {
+            return next(new ErrorHandler_1.default("Secret note not found or not owned by the user.", 404));
+        }
+        res.status(200).json({
+            success: true,
+            message: "Secret note has been successfully deleted.",
+        });
     }
-    const deletionResult = yield secret_model_1.default.deleteOne({
-        _id: secretId,
-        user: userId,
-    });
-    if (deletionResult.deletedCount === 0) {
-        return next(new ErrorHandler_1.default("Secret note not found or not owned by the user.", 404));
+    catch (error) {
+        return next(new ErrorHandler_1.default(error.message, 500));
     }
-    res.status(200).json({
-        success: true,
-        message: "Secret note has been successfully deleted.",
-    });
 }));
 exports.deleteMultipleSecretNote = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _f;

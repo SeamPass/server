@@ -44,7 +44,7 @@ exports.getWifi = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __aw
     // Retrieve all notes for the user with pagination
     const { results: wifi, pageInfo } = yield (0, pagination_1.paginate)(wifi_model_1.default, { user: userId }, searchTerms, searchFields, { page, limit });
     if (!wifi.length) {
-        return next(new ErrorHandler_1.default("No notes found", 404));
+        return res.status(200).json(Object.assign(Object.assign({ success: true }, pageInfo), { data: [] }));
     }
     const wifiDetails = wifi.map((wifiEntry) => ({
         id: wifiEntry._id,
@@ -60,11 +60,14 @@ exports.getSingleWifi = (0, catchAyncError_1.CatchAsyncError)((req, res, next) =
     try {
         const { id } = req.params;
         const userId = (_c = req === null || req === void 0 ? void 0 : req.user) === null || _c === void 0 ? void 0 : _c._id;
-        const note = yield wifi_model_1.default.findOne({ _id: id, user: userId });
-        if (!note) {
-            return next(new ErrorHandler_1.default("Wifi details not found or access denied.", 404));
+        const wifi = yield wifi_model_1.default.findOne({ _id: id, user: userId });
+        if (!wifi) {
+            return res.status(200).json({
+                success: true,
+                data: [],
+            });
         }
-        res.json({ success: true, data: note });
+        res.json({ success: true, data: wifi });
     }
     catch (error) {
         next(error);
