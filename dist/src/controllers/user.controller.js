@@ -62,19 +62,12 @@ exports.registerUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) =>
             name: newUser.nickname,
             email: newUser.email,
         };
-        try {
-            yield (0, sendMail_1.default)({
-                email: newUser.email,
-                data,
-                template: "verify-email.ejs",
-                subject: "Welcome",
-            });
-        }
-        catch (err) {
-            return res.status(500).json({
-                success: false,
-            });
-        }
+        yield (0, sendMail_1.default)({
+            email: newUser.email,
+            data,
+            template: "verify-email.ejs",
+            subject: "Welcome",
+        });
         //Send verification email
         res.status(201).json({
             success: true,

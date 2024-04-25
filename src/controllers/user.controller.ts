@@ -73,18 +73,13 @@ export const registerUser = CatchAsyncError(
         name: newUser.nickname,
         email: newUser.email,
       };
-      try {
-        await sendEmail({
-          email: newUser.email,
-          data,
-          template: "verify-email.ejs",
-          subject: "Welcome",
-        });
-      } catch (err) {
-        return res.status(500).json({
-          success: false,
-        });
-      }
+
+      await sendEmail({
+        email: newUser.email,
+        data,
+        template: "verify-email.ejs",
+        subject: "Welcome",
+      });
 
       //Send verification email
       res.status(201).json({
