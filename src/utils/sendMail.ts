@@ -41,7 +41,7 @@ const sendMail = async (options: EmailOptions): Promise<void> => {
     subject,
     html,
   };
-
+  console.log(mailOptions);
   await transporter.sendMail(mailOptions);
 };
 

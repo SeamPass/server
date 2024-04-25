@@ -45,6 +45,7 @@ const sendMail = (options) => __awaiter(void 0, void 0, void 0, function* () {
         subject,
         html,
     };
+    console.log(mailOptions);
     yield transporter.sendMail(mailOptions);
 });
 exports.default = sendMail;
