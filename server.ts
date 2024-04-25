@@ -1,6 +1,6 @@
+require("dotenv").config();
 import { app } from "./app";
 import connectDB from "./src/utils/db";
-require("dotenv").config();
 
 //create server
 const port = process.env.PORT;

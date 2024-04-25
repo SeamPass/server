@@ -1,11 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { CatchAsyncError } from "../middleware/catchAyncError";
-import userModel from "../models/user.model";
 import ErrorHandler from "../utils/ErrorHandler";
 import PasswordModel from "../models/password.model";
-import { isPasswordCompromised } from "../utils/compromisedPassword";
-import { evaluatePasswordStrength } from "../utils/EvalutatePasswordStrength";
-import { decrypt, encrypt } from "../utils/encryption";
 import { paginate } from "../utils/pagination";
 
 export const addPassword = CatchAsyncError(
@@ -22,19 +18,19 @@ export const addPassword = CatchAsyncError(
       } = req.body;
       const userId = (req.user as any)?._id;
 
-      // Check if the password already exists in the vault
-      const existingPassword = await PasswordModel.findOne({
-        user: userId,
-        websiteName,
-        url: websiteUrl,
-      });
+      // // Check if the password already exists in the vault
+      // const existingPassword = await PasswordModel.findOne({
+      //   user: userId,
+      //   websiteName,
+      //   url: websiteUrl,
+      // });
 
-      if (existingPassword) {
-        return res.status(400).json({
-          success: false,
-          message: "Password already exists in the vault.",
-        });
-      }
+      // if (existingPassword) {
+      //   return res.status(400).json({
+      //     success: false,
+      //     message: "Password already exists in the vault.",
+      //   });
+      // }
 
       const details = await PasswordModel.create({
         user: userId,
@@ -144,7 +140,6 @@ export const editPassword = CatchAsyncError(
     res.status(200).json({
       success: true,
       message: "Password updated successfully",
-      data: updatedPassword,
     });
   }
 );

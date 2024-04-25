@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Account Verified</title>
+    <title>Two-Step Verification Code</title>
     <style>
       body {
         margin: 0;
@@ -37,25 +37,13 @@
         margin: 0;
         color: #197ce2;
       }
-      .button {
-        display: inline-block;
-        padding: 10px 20px;
-        background-color: #4caf50;
-        color: white;
-        border-radius: 4px;
-        text-decoration: none;
-        font-weight: bold;
-      }
-      .button:hover {
-        background-color: #45a049;
-      }
     </style>
   </head>
   <body>
     <div
       role="article"
       aria-roledescription="email"
-      aria-label="Account Verified"
+      aria-label="Enable Account Verification Code"
       lang="en"
     >
       <table
@@ -84,18 +72,16 @@
                     <tr>
                       <td class="content">
                         <div style="line-height: 40px">&nbsp;</div>
-                        <h1 class="header">Account Verified</h1>
+                        <h1 class="header">
+                          Enable Two-Step Verification Code
+                        </h1>
                         <div style="line-height: 40px">&nbsp;</div>
                         <p style="line-height: 24px; margin: 0">
                           Hi <%= data.nickname %>,
                         </p>
                         <p>
-                          Your account has been successfully verified. Welcome
-                          to the PassSafe community!
-                        </p>
-                        <p>
-                          You can now access all the features available to
-                          verified users. Start by logging in:
+                          Your account verification code has been sent. Please
+                          use the following code to enable account verification:
                         </p>
                         <p><%= data.code %></p>
                         <p>

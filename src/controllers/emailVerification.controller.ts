@@ -13,7 +13,7 @@ export const enableEmailVerificationForLogin = CatchAsyncError(
     const userId = req.user?._id;
 
     const emailVerificationCode = generateRandomCode(6);
-    const expirationTime = new Date(Date.now() + 3600000);
+    const expirationTime = new Date(Date.now() + 900000);
 
     await EmailVerificationModel.findOneAndUpdate(
       { userId },
@@ -27,15 +27,13 @@ export const enableEmailVerificationForLogin = CatchAsyncError(
     const user = await userModel.findById({ _id: userId });
 
     // Send the verification code to the user's email
-    const data = {
-      code: emailVerificationCode,
-      name: user?.nickname,
-    };
-
     try {
       await sendMail({
         email: user?.email,
-        data,
+        data: {
+          code: emailVerificationCode,
+          nickname: user?.nickname,
+        },
         template: "enable2Step-code.ejs",
         subject: "Code",
       });
@@ -60,6 +58,7 @@ export const verifyEmailVerificationOnEnable = CatchAsyncError(
     const userId = req.user?._id;
 
     const emailVerification = await EmailVerificationModel.findOne({ userId });
+    const user = await userModel.findById({ _id: userId });
 
     if (!emailVerification) {
       return res.status(404).json({
@@ -73,8 +72,24 @@ export const verifyEmailVerificationOnEnable = CatchAsyncError(
       emailVerification.expirationTime > new Date()
     ) {
       emailVerification.emailVerificationCode = undefined;
-      emailVerification.isForLoginEnabled = true; // Set to true after successful verification
+      emailVerification.isForLoginEnabled = true;
       await emailVerification.save();
+
+      try {
+        await sendMail({
+          email: user?.email,
+          data: {
+            name: user?.nickname,
+          },
+          template: "enable2Step.ejs",
+          subject: "Two step verification enabled!!",
+        });
+      } catch (err) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to send Welcome email",
+        });
+      }
 
       res.status(200).json({
         success: true,
@@ -98,6 +113,22 @@ export const disableEmailVerificationForLogin = CatchAsyncError(
       { isForLoginEnabled: false },
       { new: true }
     );
+
+    const user = await userModel.findById({ _id: userId });
+
+    try {
+      await sendMail({
+        email: user?.email,
+        template: "disable2Step.ejs",
+        data: { name: user?.nickname },
+        subject: "Two step verification disabled!!",
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send Welcome email",
+      });
+    }
 
     res.status(200).json({
       success: true,

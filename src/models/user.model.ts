@@ -10,6 +10,7 @@ export interface Iuser extends Document {
   email: string;
   password: string;
   isVerified: boolean;
+  avatar: string;
   role: string;
   clientSalt: string;
   is2StepEnabled: boolean;
@@ -21,7 +22,7 @@ export interface Iuser extends Document {
   signAccessToken: () => string;
   signRefreshToken: () => string;
   encryptedEncryptionKey: string;
-  sgek: string;
+  sek: string;
 }
 
 const userSchema: Schema<Iuser> = new mongoose.Schema(
@@ -51,10 +52,10 @@ const userSchema: Schema<Iuser> = new mongoose.Schema(
     clientSalt: {
       type: String,
     },
-    encryptedEncryptionKey: {
+    sek: {
       type: String,
     },
-    sgek: {
+    avatar: {
       type: String,
     },
     role: {
@@ -75,14 +76,6 @@ const userSchema: Schema<Iuser> = new mongoose.Schema(
     },
     tokenExpiration: {
       type: Date,
-    },
-    resetPasswordToken: {
-      type: String,
-      required: false,
-    },
-    resetPasswordExpire: {
-      type: Date,
-      required: false,
     },
   },
   { timestamps: true }

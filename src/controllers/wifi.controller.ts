@@ -1,8 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { CatchAsyncError } from "../middleware/catchAyncError";
-import userModel from "../models/user.model";
 import ErrorHandler from "../utils/ErrorHandler";
-import { decrypt, encrypt } from "../utils/encryption";
 import WifiModel from "../models/wifi.model";
 import { paginate } from "../utils/pagination";
 
@@ -36,7 +34,7 @@ export const getWifi = CatchAsyncError(
     const limit = parseInt(req.query.limit as string) || 10;
     const searchTerms = req.query.search as string;
 
-    const searchFields = ["name"];
+    const searchFields = ["wifiName"];
 
     // Retrieve all notes for the user with pagination
     const { results: wifi, pageInfo } = await paginate(
@@ -89,13 +87,13 @@ export const getSingleWifi = CatchAsyncError(
 
 export const editWifiDetails = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { passwordId } = req.params;
+    const { wifiId } = req.params;
 
     const updates = req.body;
     const userId = req.user?._id;
 
     const updatedWifi = await WifiModel.findOneAndUpdate(
-      { _id: passwordId, user: userId },
+      { _id: wifiId, user: userId },
       { $set: updates },
       { new: true, runValidators: true }
     );

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Account Verified</title>
+    <title>Login OTP</title>
     <style>
       body {
         margin: 0;
@@ -37,17 +37,9 @@
         margin: 0;
         color: #197ce2;
       }
-      .button {
-        display: inline-block;
-        padding: 10px 20px;
-        background-color: #4caf50;
-        color: white;
-        border-radius: 4px;
-        text-decoration: none;
+      .otp-code {
         font-weight: bold;
-      }
-      .button:hover {
-        background-color: #45a049;
+        color: #4caf50;
       }
     </style>
   </head>
@@ -55,7 +47,7 @@
     <div
       role="article"
       aria-roledescription="email"
-      aria-label="Account Verified"
+      aria-label="Login OTP"
       lang="en"
     >
       <table
@@ -84,23 +76,23 @@
                     <tr>
                       <td class="content">
                         <div style="line-height: 40px">&nbsp;</div>
-                        <h1 class="header">Account Verified</h1>
+                        <h1 class="header">Login OTP</h1>
                         <div style="line-height: 40px">&nbsp;</div>
-                        <p style="line-height: 24px; margin: 0">
-                          Hi <%= data.nickname %>,
+                        <p style="line-height: 24px; margin: 0">Hi there,</p>
+                        <p>
+                          You're receiving this email because you requested a
+                          one-time login code.
                         </p>
                         <p>
-                          Your account has been successfully verified. Welcome
-                          to the PassSafe community!
+                          Your OTP (One-Time Password) for login is:
+                          <span class="otp-code"><%= data.code %></span>.
                         </p>
                         <p>
-                          You can now access all the features available to
-                          verified users. Start by logging in:
+                          Please use this code to complete the login process.
                         </p>
                         <p>
-                          <a href="<%= website_url %>login" class="button"
-                            >Login</a
-                          >
+                          If you didn't request this code, you can safely ignore
+                          this email.
                         </p>
                         <p>
                           If you have any questions or need assistance, feel

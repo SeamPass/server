@@ -7,11 +7,12 @@ import {
   login,
   logoutUser,
   registerUser,
-  resendResetLink,
+  resendOtp,
   resendVerificationLink,
   unlockUser,
   updateAccessToken,
   updateUser,
+  uploadProfileImage,
   verifyUser,
 } from "../controllers/user.controller";
 import { isAuthenticated } from "../middleware/auth";
@@ -22,6 +23,7 @@ import {
   verifyEmailVerificationCode,
   verifyEmailVerificationOnEnable,
 } from "../controllers/emailVerification.controller";
+import multer from "multer";
 
 const userRouter = express.Router();
 
@@ -39,6 +41,9 @@ const loginRateLimiter = createRateLimiter({
   message: "Try again in the next 15 minutes.",
 });
 
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
 userRouter.post("/register-user", registerUser);
 userRouter.post("/verify", verifyUser);
 userRouter.post("/resend-verification-link", resendVerificationLink);
@@ -50,11 +55,11 @@ userRouter.post("/forgot-password/confirm", forgotPassword);
 userRouter.get("/get-user", isAuthenticated, getUser);
 userRouter.patch("/update-user", isAuthenticated, updateUser);
 userRouter.post("/unlock-account", isAuthenticated, unlockUser);
-userRouter.post(
-  "/forgot-password/resend",
-  resendResetLinkLimiter,
-  resendResetLink
-);
+// userRouter.post(
+//   "/forgot-password/resend",
+//   resendResetLinkLimiter,
+//   resendResetLink
+// );
 userRouter.post("/change-password", isAuthenticated, changePassword);
 userRouter.post(
   "/enable2Step",
@@ -73,5 +78,12 @@ userRouter.post(
   verifyEmailVerificationOnEnable
 );
 userRouter.post("/verify-login-code", verifyEmailVerificationCode);
+userRouter.post("/resend-otp", resendOtp);
+userRouter.post(
+  "/upload",
+  upload.single("avatar"),
+  isAuthenticated,
+  uploadProfileImage
+);
 
 export default userRouter;

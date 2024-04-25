@@ -39,11 +39,6 @@ const PasswordSchema: Schema = new Schema(
       type: String,
       required: true,
     },
-    compromised: {
-      type: Boolean,
-      required: true,
-      default: false,
-    },
   },
   {
     timestamps: true,
