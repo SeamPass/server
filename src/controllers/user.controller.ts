@@ -73,7 +73,6 @@ export const registerUser = CatchAsyncError(
         name: newUser.nickname,
         email: newUser.email,
       };
-
       try {
         await sendMail({
           email: newUser.email,

@@ -23,7 +23,7 @@ const sendMail = async (options: EmailOptions): Promise<void> => {
       ciphers: "SSLv3",
     },
   });
-
+  console.log(options);
   const { email, subject, template, data } = options;
 
   // get the path to the email template file
