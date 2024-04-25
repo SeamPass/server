@@ -84,7 +84,6 @@ export const registerUser = CatchAsyncError(
       } catch (err) {
         return res.status(500).json({
           success: false,
-          message: "Failed to send Welcome email",
         });
       }
 
@@ -153,7 +152,6 @@ export const resendVerificationLink = CatchAsyncError(
     } catch (err) {
       return res.status(500).json({
         success: false,
-        message: "Failed to send verification email.",
       });
     }
   }
@@ -212,7 +210,6 @@ export const verifyUser = CatchAsyncError(
       } catch (err) {
         return res.status(500).json({
           success: false,
-          message: "Failed to send Email verified",
         });
       }
 
@@ -279,7 +276,6 @@ export const login = CatchAsyncError(
       } catch (err) {
         return res.status(500).json({
           success: false,
-          message: "Failed to send Email verified",
         });
       }
 
@@ -363,7 +359,6 @@ export const resendOtp = CatchAsyncError(
         } catch (err) {
           return res.status(500).json({
             success: false,
-            message: "Failed to send Email verified",
           });
         }
       }

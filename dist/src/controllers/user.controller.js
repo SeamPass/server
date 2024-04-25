@@ -73,7 +73,6 @@ exports.registerUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) =>
         catch (err) {
             return res.status(500).json({
                 success: false,
-                message: "Failed to send Welcome email",
             });
         }
         //Send verification email
@@ -133,7 +132,6 @@ exports.resendVerificationLink = (0, catchAyncError_1.CatchAsyncError)((req, res
     catch (err) {
         return res.status(500).json({
             success: false,
-            message: "Failed to send verification email.",
         });
     }
 }));
@@ -175,7 +173,6 @@ exports.verifyUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => _
         catch (err) {
             return res.status(500).json({
                 success: false,
-                message: "Failed to send Email verified",
             });
         }
         // Response to the client
@@ -228,7 +225,6 @@ exports.login = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awai
         catch (err) {
             return res.status(500).json({
                 success: false,
-                message: "Failed to send Email verified",
             });
         }
         // Inform the user that a verification code has been sent
@@ -299,7 +295,6 @@ exports.resendOtp = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __
             catch (err) {
                 return res.status(500).json({
                     success: false,
-                    message: "Failed to send Email verified",
                 });
             }
         }
