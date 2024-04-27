@@ -1,6 +1,6 @@
 require("dotenv").config();
 import mongoose, { Model, Schema } from "mongoose";
-import { generateSalt, hashPassword } from "../utils/passwordHash";
+import bcrypt from "bcrypt";
 
 const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -23,6 +23,10 @@ export interface Iuser extends Document {
   signRefreshToken: () => string;
   encryptedEncryptionKey: string;
   sek: string;
+  ps: string;
+  hintSalt: string;
+  encryptedHint: string;
+  hintIv: string;
 }
 
 const userSchema: Schema<Iuser> = new mongoose.Schema(
@@ -55,9 +59,19 @@ const userSchema: Schema<Iuser> = new mongoose.Schema(
     sek: {
       type: String,
     },
+    hintSalt: {
+      type: String,
+    },
+    hintIv: {
+      type: String,
+    },
+    encryptedHint: {
+      type: String,
+    },
     avatar: {
       type: String,
     },
+    ps: { type: String },
     role: {
       type: String,
       enum: ["user", "admin"],
@@ -81,12 +95,22 @@ const userSchema: Schema<Iuser> = new mongoose.Schema(
   { timestamps: true }
 );
 
+//encrypt password before saving to DB
+userSchema.pre<any>("save", async function (next: any) {
+  if (!this.isModified("password")) {
+    return next;
+  }
+  const salt = await bcrypt.genSalt(10);
+  const hashPassword = await bcrypt.hash(this.password, salt);
+  this.password = hashPassword;
+  next();
+});
+
 //compare password
 userSchema.methods.comparePassword = async function (
   enteredPassword: string
 ): Promise<boolean> {
-  const hashedEnteredPassword = await hashPassword(enteredPassword, this.salt);
-  return this.password === hashedEnteredPassword;
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
 const userModel: Model<Iuser> = mongoose.model("User", userSchema);

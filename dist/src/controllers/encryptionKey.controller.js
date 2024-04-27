@@ -61,6 +61,7 @@ exports.updateEncryptedSGEK = (0, catchAyncError_1.CatchAsyncError)((req, res, n
     var _b;
     const userId = (_b = req === null || req === void 0 ? void 0 : req.user) === null || _b === void 0 ? void 0 : _b._id;
     const { mk, iv, newSalt } = req.body;
+    console.log({ mk, iv, newSalt });
     if (!mk || !iv || !newSalt) {
         return next(new ErrorHandler_1.default("Missing required fields: mk, iv, or newSalt", 400));
     }

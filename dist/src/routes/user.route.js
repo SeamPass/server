@@ -28,17 +28,9 @@ userRouter.post("/verify", user_controller_1.verifyUser);
 userRouter.post("/resend-verification-link", user_controller_1.resendVerificationLink);
 userRouter.post("/login", user_controller_1.login);
 userRouter.get("/get-salt", user_controller_1.getSalt);
-userRouter.get("/logout", auth_1.isAuthenticated, user_controller_1.logoutUser);
-userRouter.get("/refresh-access-token", user_controller_1.updateAccessToken);
-userRouter.post("/forgot-password/confirm", user_controller_1.forgotPassword);
 userRouter.get("/get-user", auth_1.isAuthenticated, user_controller_1.getUser);
 userRouter.patch("/update-user", auth_1.isAuthenticated, user_controller_1.updateUser);
 userRouter.post("/unlock-account", auth_1.isAuthenticated, user_controller_1.unlockUser);
-// userRouter.post(
-//   "/forgot-password/resend",
-//   resendResetLinkLimiter,
-//   resendResetLink
-// );
 userRouter.post("/change-password", auth_1.isAuthenticated, user_controller_1.changePassword);
 userRouter.post("/enable2Step", auth_1.isAuthenticated, emailVerification_controller_1.enableEmailVerificationForLogin);
 userRouter.post("/disable2Step", auth_1.isAuthenticated, emailVerification_controller_1.disableEmailVerificationForLogin);

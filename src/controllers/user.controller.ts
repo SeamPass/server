@@ -5,17 +5,12 @@ import ErrorHandler from "../utils/ErrorHandler";
 import userModel from "../models/user.model";
 import crypto from "crypto";
 import logger from "../utils/logger";
-import jwt, { JwtPayload } from "jsonwebtoken";
 import {
   generateRandomCode,
   generateSessionIdentifier,
 } from "../utils/generateRandomCode";
 import EmailVerificationModel from "../models/emailVerification.model";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  sendToken,
-} from "../utils/jwt";
+import { sendToken } from "../utils/jwt";
 import { minutesToFutureTimestamp } from "../utils/minutesToFutureTimestamp";
 import EncryptionKeyModel from "../models/encryptionKeyModel";
 import sharp from "sharp";
@@ -49,12 +44,10 @@ export const registerUser = CatchAsyncError(
         return next(new ErrorHandler("Email already exists.", 400));
       }
 
-      // Generate a unique encryption key for each user
-      const encryptionSalt = crypto.randomBytes(32).toString("hex");
       const verificationToken = crypto.randomBytes(32).toString("hex");
 
       const currentTime = new Date();
-      console.log("current time", currentTime);
+
       let tokenExpiration = new Date(currentTime.getTime() + 3600000);
 
       // Create new user with hashed password and encrypted encryption key
@@ -64,7 +57,6 @@ export const registerUser = CatchAsyncError(
         password: hashedPassword,
         clientSalt,
         verificationToken,
-        ps: encryptionSalt,
         tokenExpiration,
       });
 
@@ -90,7 +82,6 @@ export const registerUser = CatchAsyncError(
           id: newUser._id,
           nickname: newUser.nickname,
           email: newUser.email,
-          encryptionSalt,
         },
       });
     } catch (error: any) {
@@ -113,7 +104,7 @@ export const resendVerificationLink = CatchAsyncError(
     }
 
     if (user.isVerified) {
-      return res.status(409).json({
+      return res.status(400).json({
         success: false,
         message: "Your account is already verified.",
       });
@@ -169,7 +160,7 @@ export const verifyUser = CatchAsyncError(
         verificationToken: token,
         tokenExpiration: { $gt: new Date() }, // Check if the token is not expired
       });
-      console.log("hefjifiejidj", user?.tokenExpiration);
+
       if (!user) {
         return next(
           new ErrorHandler(
@@ -227,20 +218,22 @@ export const login = CatchAsyncError(
 
     // Find the user based on the email
     const user = await userModel.findOne({ email }).select("+password");
+    console.log(user);
     if (!user) {
       return next(new ErrorHandler("User not found", 404));
     }
 
     // Compare the client-side hashed password with the stored hashed password
-    if (user.password !== password) {
-      return next(new ErrorHandler("Invalid password", 401));
+    const isCorrectPassword = await user.comparePassword(password);
+    if (!isCorrectPassword) {
+      return next(new ErrorHandler("Incorrect password ", 400));
     }
 
     if (!user.isVerified) {
       return next(
         new ErrorHandler(
           "Please verify your account before proceeding to login",
-          401
+          400
         )
       );
     }
@@ -295,7 +288,7 @@ export const login = CatchAsyncError(
       const info = await EncryptionKeyModel.findOne({
         userId: user._id,
       }).lean();
-
+      console.log(info);
       const AllInfo = {
         userInfo,
         mk: info?.mk,
@@ -318,7 +311,7 @@ export const resendOtp = CatchAsyncError(
     const user = await userModel.findOne({ email });
 
     if (!user) {
-      return next(new ErrorHandler("User not found", 404));
+      return next(new ErrorHandler("User not found", 400));
     }
     try {
       // Check if two-step verification is enabled for the user
@@ -366,215 +359,6 @@ export const resendOtp = CatchAsyncError(
   }
 );
 
-//Logout User
-export const logoutUser = CatchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      res.cookie("access_token", "", {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 1,
-      });
-      res.cookie("refresh_token", "", {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 1,
-      });
-      res.json({ success: true, message: "Logged out successfully" });
-
-      // Assuming logger is defined and you can obtain the user ID from the request (if the user was authenticated)
-      // logger.info(`User ID: ${req.user?._id} logged out`);
-    } catch (error: any) {
-      return next(new ErrorHandler(error.message, 400));
-    }
-  }
-);
-
-//Update access token
-export const updateAccessToken = CatchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const refresh_token = req.cookies.refresh_token;
-
-      if (!refresh_token) {
-        return next(new ErrorHandler("Refresh token is required", 400));
-      }
-
-      // Verify the refresh token
-      const decoded = jwt.verify(
-        refresh_token,
-        process.env.REFRESH_TOKEN!
-      ) as JwtPayload;
-      if (!decoded.id) {
-        return next(new ErrorHandler("Could not refresh token", 400));
-      }
-
-      const user = await userModel.findById(decoded.id);
-      if (!user) {
-        return next(new ErrorHandler("User not found", 404));
-      }
-
-      // Generate new tokens using the revised methods
-      const accessToken = generateAccessToken(user);
-      const refreshToken = generateRefreshToken(user); // Optional: Generate a new refresh token
-
-      // Define cookie options consistently with the sendToken function
-      const cookieOptions = {
-        httpOnly: true,
-        sameSite: "lax" as const, // Ensuring type safety
-        secure: process.env.NODE_ENV === "production",
-      };
-
-      // Set cookies for the new tokens
-      res.cookie("access_token", accessToken, {
-        ...cookieOptions,
-        maxAge: minutesToFutureTimestamp(
-          Number(process.env.ACCESS_TOKEN_EXPIRE)
-        ),
-      });
-
-      res.status(200).json({
-        success: true,
-        accessToken,
-        expiresIn: minutesToFutureTimestamp(
-          Number(process.env.ACCESS_TOKEN_EXPIRE)
-        ),
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        return next(new ErrorHandler(error.message, 401));
-      } else {
-        // Fallback error handling for unexpected error types
-        return next(new ErrorHandler("An unexpected error occurred", 500));
-      }
-    }
-  }
-);
-
-//Forgot Password
-export const forgotPassword = CatchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
-    let user;
-    try {
-      const { email } = req.body;
-      if (!email) {
-        return next(new ErrorHandler("Please provide your email address", 400));
-      }
-
-      user = await userModel.findOne({ email });
-
-      if (!user) {
-        return next(new ErrorHandler("Email could not be found", 404));
-      }
-
-      // Generate password reset token
-      const resetToken = crypto.randomBytes(20).toString("hex");
-
-      // Hash the token and set to resetPasswordToken field
-      const resetPasswordToken = crypto
-        .createHash("sha256")
-        .update(resetToken)
-        .digest("hex");
-
-      // Set token expiry time to 1hour
-      user.resetPasswordToken = resetPasswordToken;
-      user.resetPasswordExpire = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
-
-      await user.save();
-      const data = {
-        token: resetPasswordToken,
-        name: user.nickname,
-      };
-      // Send the email with the reset link
-      try {
-        await sendEmail({
-          email: user.email,
-          data,
-          template: "forgot-password.ejs",
-          subject: "Password Reset",
-        });
-      } catch (err) {
-        return res.status(500).json({
-          success: false,
-          message: "Failed to send password reset email",
-        });
-      }
-
-      res.status(200).json({
-        success: true,
-        message: "Password reset link has been sent to your email address.",
-        resetToken,
-      });
-    } catch (error: any) {
-      if (user) {
-        user.resetPasswordToken = undefined;
-        user.resetPasswordExpire = undefined;
-        await user.save({ validateBeforeSave: false });
-      }
-
-      return next(new ErrorHandler(error.message, 500));
-    }
-  }
-);
-
-// //Resend Reset Password Link
-// export const resendResetLink = CatchAsyncError(
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     const { email } = req.body;
-//     let user;
-//     if (!email) {
-//       return next(new ErrorHandler("Please provide your email address", 400));
-//     }
-
-//     user = await userModel.findOne({ email });
-
-//     if (!user) {
-//       return next(new ErrorHandler("Email not found", 404));
-//     }
-
-//     // Check if the user already requested a password reset and the token is not expired
-//     if (
-//       user.resetPasswordToken &&
-//       user.resetPasswordExpire &&
-//       user.resetPasswordExpire > new Date()
-//     ) {
-//       // Generate a new password reset token
-//       const resetToken = crypto.randomBytes(20).toString("hex");
-//       const resetPasswordToken = crypto
-//         .createHash("sha256")
-//         .update(resetToken)
-//         .digest("hex");
-
-//       user.resetPasswordToken = resetPasswordToken;
-//       user.resetPasswordExpire = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour from now
-
-//       await user.save();
-
-//       // Resend the email with the reset link
-//       const resetUrl = `${req.protocol}://${req.get(
-//         "host"
-//       )}/password-reset/${resetToken}`;
-
-//       // Call a function to send the email
-//       // await sendResetPasswordEmail(user.email, resetUrl);
-//       res.status(200).json({
-//         success: true,
-//         message: "Password reset link has been resent to your email address.",
-//       });
-//     } else {
-//       // If no reset request was made or the token expired, inform the user
-//       return next(
-//         new ErrorHandler(
-//           "No password reset request was found or the link has expired",
-//           400
-//         )
-//       );
-//     }
-//   }
-// );
-
 export const changePassword = async (
   req: Request,
   res: Response,
@@ -599,8 +383,9 @@ export const changePassword = async (
     }
 
     // Compare the client-side hashed password with the stored hashed password
-    if (user.password !== oldPassword) {
-      return next(new ErrorHandler("Invalid password", 401));
+    const isCorrectPassword = await user.comparePassword(oldPassword);
+    if (!isCorrectPassword) {
+      return next(new ErrorHandler("Incorrect password ", 400));
     }
 
     // Update the user's password with the new hashed password and new client-side generated salt
@@ -625,12 +410,11 @@ export const changePassword = async (
 export const getSalt = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email } = req.query;
+    console.log("email", email);
     const user = await userModel.findOne({ email: email as string });
-
+    console.log(user);
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
+      return next(new ErrorHandler("User not found.", 400));
     }
 
     res.json({ success: true, salt: user.clientSalt });
@@ -690,8 +474,9 @@ export const unlockUser = CatchAsyncError(
     }
 
     // Compare the client-side hashed password with the stored hashed password
-    if (user.password !== password) {
-      return next(new ErrorHandler("Invalid password", 400));
+    const isCorrectPassword = await user.comparePassword(password);
+    if (!isCorrectPassword) {
+      return next(new ErrorHandler("Incorrect password ", 400));
     }
 
     const info = await EncryptionKeyModel.findOne({
@@ -730,7 +515,7 @@ export const uploadProfileImage = CatchAsyncError(
       await s3.send(command);
 
       const updatedUser = await userModel.findOneAndUpdate(
-        { _id: req.user.id },
+        { _id: req.user._id },
         { avatar: imageName },
         { new: true }
       );

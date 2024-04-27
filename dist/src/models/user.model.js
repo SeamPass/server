@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv").config();
 const mongoose_1 = __importDefault(require("mongoose"));
-const passwordHash_1 = require("../utils/passwordHash");
+const bcrypt_1 = __importDefault(require("bcrypt"));
 const emailRegexPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const userSchema = new mongoose_1.default.Schema({
     nickname: {
@@ -44,9 +44,19 @@ const userSchema = new mongoose_1.default.Schema({
     sek: {
         type: String,
     },
+    hintSalt: {
+        type: String,
+    },
+    hintIv: {
+        type: String,
+    },
+    encryptedHint: {
+        type: String,
+    },
     avatar: {
         type: String,
     },
+    ps: { type: String },
     role: {
         type: String,
         enum: ["user", "admin"],
@@ -67,11 +77,22 @@ const userSchema = new mongoose_1.default.Schema({
         type: Date,
     },
 }, { timestamps: true });
+//encrypt password before saving to DB
+userSchema.pre("save", function (next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!this.isModified("password")) {
+            return next;
+        }
+        const salt = yield bcrypt_1.default.genSalt(10);
+        const hashPassword = yield bcrypt_1.default.hash(this.password, salt);
+        this.password = hashPassword;
+        next();
+    });
+});
 //compare password
 userSchema.methods.comparePassword = function (enteredPassword) {
     return __awaiter(this, void 0, void 0, function* () {
-        const hashedEnteredPassword = yield (0, passwordHash_1.hashPassword)(enteredPassword, this.salt);
-        return this.password === hashedEnteredPassword;
+        return yield bcrypt_1.default.compare(enteredPassword, this.password);
     });
 };
 const userModel = mongoose_1.default.model("User", userSchema);

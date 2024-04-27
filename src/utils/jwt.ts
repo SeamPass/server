@@ -11,50 +11,32 @@ declare var process: {
 };
 
 // Generate JWT Access and Refresh Tokens
-export const generateAccessToken = (userId: any): string => {
-  return jwt.sign({ id: userId }, process.env.ACCESS_TOKEN!, {
-    expiresIn: "15m",
+export const generateAccessToken = (id: string): string => {
+  return jwt.sign({ _id: id }, process.env.ACCESS_TOKEN!, {
+    expiresIn: "1d",
   });
 };
 
-export const generateRefreshToken = (userId: any): string => {
-  return jwt.sign({ id: userId }, process.env.REFRESH_TOKEN!, {
-    expiresIn: "7d",
-  });
-};
+// export const generateRefreshToken = (id: string): string => {
+//   return jwt.sign({ _id: id }, process.env.REFRESH_TOKEN!, {
+//     expiresIn: "1m",
+//   });
+// };
 
 export const sendToken = (
   user: any,
   statusCode: number,
   res: Response
-  // sessionIdentifier: string
 ): void => {
-  console.log(user);
   const accessToken = generateAccessToken(user.userInfo._id.toString());
-  const refreshToken = generateRefreshToken(user.userInfo._id.toString());
-
-  // Options for cookies
-  const cookieOptions = {
-    httpOnly: true,
-    sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
-  };
-
-  // Set cookies for tokens
-  res.cookie("access_token", accessToken, {
-    ...cookieOptions,
-    maxAge: Number(process.env.ACCESS_TOKEN_EXPIRE),
-  });
-  res.cookie("refresh_token", refreshToken, {
-    ...cookieOptions,
-    maxAge: minutesToFutureTimestamp(Number(process.env.REFRESH_TOKEN_EXPIRE)),
-  });
-
+  // const refreshToken = generateRefreshToken(user.userInfo._id.toString());
+  console.log(process.env.ACCESS_TOKEN_EXPIRE);
   // Send response with tokens
   res.status(statusCode).json({
     success: true,
     ...user,
     accessToken,
+    // refreshToken,
     expiresIn: minutesToFutureTimestamp(
       Number(process.env.ACCESS_TOKEN_EXPIRE)
     ),

@@ -57,7 +57,7 @@ export const updateEncryptedSGEK = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const userId = req?.user?._id;
     const { mk, iv, newSalt } = req.body;
-
+    console.log({ mk, iv, newSalt });
     if (!mk || !iv || !newSalt) {
       return next(
         new ErrorHandler("Missing required fields: mk, iv, or newSalt", 400)

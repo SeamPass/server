@@ -5,7 +5,6 @@ interface IEncryptionKeyDocument extends Document {
   mk: string;
   iv: string;
   salt: string;
-  clientSalt: string;
 }
 
 const encryptionKeySchema = new mongoose.Schema(

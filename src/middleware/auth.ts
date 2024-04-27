@@ -2,45 +2,32 @@ import { Request, Response, NextFunction } from "express";
 import ErrorHandler from "../utils/ErrorHandler";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { CatchAsyncError } from "./catchAyncError";
-import userModel from "../models/user.model";
 
 // AUTHENTICATED USER
 export const isAuthenticated = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const access_token = req.cookies.access_token;
-    if (!access_token) {
+    const authHeader = req.headers.authorization;
+    const accessToken = authHeader?.split(" ")[1];
+
+    if (!accessToken) {
       return next(
-        new ErrorHandler("Please login to access this resource", 400)
+        new ErrorHandler("Please login to access this resource", 401)
       );
     }
 
-    try {
-      const decoded = jwt.verify(
-        access_token,
-        process.env.ACCESS_TOKEN as string
-      ) as JwtPayload;
+    jwt.verify(
+      accessToken,
+      process.env.ACCESS_TOKEN as string,
+      (err, decoded) => {
+        if (err) {
+          return next(new ErrorHandler(err.message, 401));
+        }
 
-      if (!decoded) {
-        return next(new ErrorHandler("Access token is not valid", 400));
+        req.user = decoded as JwtPayload;
+
+        next();
       }
-
-      const user = await userModel.findById(decoded.id);
-
-      if (!user) {
-        return next(
-          new ErrorHandler("User not found, please login again", 400)
-        );
-      }
-
-      // Assign the user data to the request object
-      req.user = user;
-
-      next();
-    } catch (error: any) {
-      return next(
-        new ErrorHandler("Error verifying access token: " + error.message, 500)
-      );
-    }
+    );
   }
 );
 
