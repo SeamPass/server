@@ -130,7 +130,6 @@ exports.verifyUser = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => _
             res.status(400);
             return next(new ErrorHandler_1.default("Token is missing", 400));
         }
-        console.log(token);
         const user = yield user_model_1.default.findOne({
             verificationToken: token,
             tokenExpiration: { $gt: new Date() }, // Check if the token is not expired
@@ -177,7 +176,6 @@ exports.login = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awai
     const { email, password } = req.body;
     // Find the user based on the email
     const user = yield user_model_1.default.findOne({ email }).select("+password");
-    console.log(user);
     if (!user) {
         return next(new ErrorHandler_1.default("User not found", 404));
     }
@@ -234,7 +232,6 @@ exports.login = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awai
         const info = yield encryptionKeyModel_1.default.findOne({
             userId: user._id,
         }).lean();
-        console.log(info);
         const AllInfo = {
             userInfo,
             mk: info === null || info === void 0 ? void 0 : info.mk,
@@ -332,9 +329,7 @@ const changePassword = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
 exports.changePassword = changePassword;
 exports.getSalt = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { email } = req.query;
-    console.log("email", email);
     const user = yield user_model_1.default.findOne({ email: email });
-    console.log(user);
     if (!user) {
         return next(new ErrorHandler_1.default("User not found.", 400));
     }

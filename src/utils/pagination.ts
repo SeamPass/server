@@ -1,12 +1,10 @@
 import { Document, FilterQuery, Model } from "mongoose";
 
-// Define a generic type for the pagination options
 interface PaginationOptions {
   page?: number;
   limit?: number;
 }
 
-// Define a generic type for the paginated result
 interface PaginatedResult<T> {
   results: any;
   pageInfo: {
@@ -19,7 +17,6 @@ interface PaginatedResult<T> {
   };
 }
 
-// Modify the paginate function to be generic and accept search fields
 export async function paginate<T extends Document>(
   model: Model<T>,
   baseQuery: FilterQuery<T>,
@@ -30,7 +27,6 @@ export async function paginate<T extends Document>(
   const skip = (page - 1) * limit;
   let query: any = baseQuery;
 
-  // Apply search condition if searchTerm is provided
   if (searchTerm) {
     query = {
       ...query,

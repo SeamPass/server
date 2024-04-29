@@ -20,7 +20,6 @@ const pagination_1 = require("../utils/pagination");
 exports.addSecretNote = (0, catchAyncError_1.CatchAsyncError)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const { title, note } = req.body;
-    console.log(req.user.id);
     const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
     if (!title || !note) {
         return next(new ErrorHandler_1.default("Please provide all fields", 400));

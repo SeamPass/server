@@ -154,8 +154,6 @@ export const verifyUser = CatchAsyncError(
         return next(new ErrorHandler("Token is missing", 400));
       }
 
-      console.log(token);
-
       const user = await userModel.findOne({
         verificationToken: token,
         tokenExpiration: { $gt: new Date() }, // Check if the token is not expired
@@ -218,7 +216,7 @@ export const login = CatchAsyncError(
 
     // Find the user based on the email
     const user = await userModel.findOne({ email }).select("+password");
-    console.log(user);
+
     if (!user) {
       return next(new ErrorHandler("User not found", 404));
     }
@@ -288,7 +286,7 @@ export const login = CatchAsyncError(
       const info = await EncryptionKeyModel.findOne({
         userId: user._id,
       }).lean();
-      console.log(info);
+
       const AllInfo = {
         userInfo,
         mk: info?.mk,
@@ -410,9 +408,9 @@ export const changePassword = async (
 export const getSalt = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email } = req.query;
-    console.log("email", email);
+
     const user = await userModel.findOne({ email: email as string });
-    console.log(user);
+
     if (!user) {
       return next(new ErrorHandler("User not found.", 400));
     }

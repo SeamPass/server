@@ -21,7 +21,6 @@ exports.generateAccessToken = generateAccessToken;
 const sendToken = (user, statusCode, res) => {
     const accessToken = (0, exports.generateAccessToken)(user.userInfo._id.toString());
     // const refreshToken = generateRefreshToken(user.userInfo._id.toString());
-    console.log(process.env.ACCESS_TOKEN_EXPIRE);
     // Send response with tokens
     res.status(statusCode).json(Object.assign(Object.assign({ success: true }, user), { accessToken, 
         // refreshToken,

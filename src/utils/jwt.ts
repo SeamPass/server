@@ -30,7 +30,7 @@ export const sendToken = (
 ): void => {
   const accessToken = generateAccessToken(user.userInfo._id.toString());
   // const refreshToken = generateRefreshToken(user.userInfo._id.toString());
-  console.log(process.env.ACCESS_TOKEN_EXPIRE);
+
   // Send response with tokens
   res.status(statusCode).json({
     success: true,

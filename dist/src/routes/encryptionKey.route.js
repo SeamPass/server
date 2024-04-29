@@ -15,8 +15,8 @@ const resendResetLinkLimiter = (0, rateLimiter_1.createRateLimiter)({
     message: "Too many resend requests from this IP, please try again after an hour",
 });
 const loginRateLimiter = (0, rateLimiter_1.createRateLimiter)({
-    windowMs: 15 * 60 * 1000, // 15 minutes in milliseconds
-    max: 3, // limit each IP to 3 login attempts per 15-minute window
+    windowMs: 15 * 60 * 1000,
+    max: 3,
     message: "Try again in the next 15 minutes.",
 });
 encryptionKeyRouter.post("/store-sgek", encryptionKey_controller_1.storeEncryptedSGEK);

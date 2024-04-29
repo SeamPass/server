@@ -7,7 +7,6 @@ import { paginate } from "../utils/pagination";
 export const addSecretNote = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { title, note } = req.body;
-    console.log(req.user.id);
     const userId = req.user?._id;
 
     if (!title || !note) {

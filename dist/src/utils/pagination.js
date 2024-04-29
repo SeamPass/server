@@ -10,12 +10,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.paginate = void 0;
-// Modify the paginate function to be generic and accept search fields
 function paginate(model_1, baseQuery_1, searchTerm_1, searchFields_1, _a) {
     return __awaiter(this, arguments, void 0, function* (model, baseQuery, searchTerm, searchFields, { page = 1, limit = 10 }) {
         const skip = (page - 1) * limit;
         let query = baseQuery;
-        // Apply search condition if searchTerm is provided
         if (searchTerm) {
             query = Object.assign(Object.assign({}, query), { $or: searchFields.map((field) => ({
                     [field]: { $regex: new RegExp(searchTerm, "i") },

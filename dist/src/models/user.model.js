@@ -44,15 +44,6 @@ const userSchema = new mongoose_1.default.Schema({
     sek: {
         type: String,
     },
-    hintSalt: {
-        type: String,
-    },
-    hintIv: {
-        type: String,
-    },
-    encryptedHint: {
-        type: String,
-    },
     avatar: {
         type: String,
     },

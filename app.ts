@@ -25,12 +25,8 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "http://localhost:5174",
       "http://localhost:3000",
-      "https://angry-minute-production.up.railway.app",
       "https://passsafe-fe-production.up.railway.app",
-      "http://localhost:54346",
-      " http://192.168.1.243:5173",
     ],
     credentials: true,
   })

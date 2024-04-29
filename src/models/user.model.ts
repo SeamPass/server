@@ -24,9 +24,6 @@ export interface Iuser extends Document {
   encryptedEncryptionKey: string;
   sek: string;
   ps: string;
-  hintSalt: string;
-  encryptedHint: string;
-  hintIv: string;
 }
 
 const userSchema: Schema<Iuser> = new mongoose.Schema(
@@ -57,15 +54,6 @@ const userSchema: Schema<Iuser> = new mongoose.Schema(
       type: String,
     },
     sek: {
-      type: String,
-    },
-    hintSalt: {
-      type: String,
-    },
-    hintIv: {
-      type: String,
-    },
-    encryptedHint: {
       type: String,
     },
     avatar: {
