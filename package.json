@@ -12,7 +12,7 @@
     "build": "tsc && copyfiles -u 1 src/mail/*.ejs dist/src/"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.556.0",
+    "@aws-sdk/client-s3": "^3.563.0",
     "@aws-sdk/s3-request-presigner": "^3.556.0",
     "@types/bcrypt": "^5.0.2",
     "@types/ejs": "^3.1.5",
